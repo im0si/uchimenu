@@ -76,6 +76,7 @@
   .mystat{display:flex;gap:10px;margin-bottom:14px}
   .stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;text-align:center}
   .stat .num{font-size:24px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .bignum{font-size:36px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
   .stat .lbl{font-size:11px;color:var(--sub);font-weight:600}
   .formrow{display:flex;gap:8px;margin-bottom:10px}
   .photolabel{display:block;text-align:center;border:1.5px dashed #ddd;border-radius:14px;padding:12px;font-size:13px;color:var(--sub);margin-bottom:10px;font-weight:600}
@@ -229,6 +230,43 @@
   </div>
 </div>
 
+<!-- ================= ランチ（外食・コンビニ記録 → 夕食予算） ================= -->
+<div class="wrap hidden" id="page-lunch">
+  <div class="mystat">
+    <div class="stat"><div class="num" id="lunchTodayKcal">0</div><div class="lbl">今日食べた kcal</div></div>
+    <div class="stat"><div class="num" id="lunchStreak">0</div><div class="lbl">連続記録 日</div></div>
+  </div>
+
+  <div class="card" id="lunchBudgetCard"></div>
+
+  <div class="card">
+    <h2>かんたん記録：食べたものをタップ</h2>
+    <div id="lunchQuick"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>リストにないものを写真つきで記録する</summary>
+      <div style="margin-top:12px">
+        <label class="photolabel" id="lunchPhotoLabel">📷 写真を追加（あとからでもOK）<input type="file" accept="image/*" id="lunchPhotoInput" class="hidden"></label>
+        <div class="formrow"><input type="text" id="lunchName" placeholder="食べたもの（例：カツカレー）"></div>
+        <div class="formrow"><input type="number" id="lunchKcal" placeholder="kcal（だいたいでOK・未入力なら400）" style="width:100%;text-align:left"></div>
+        <button class="btn2 fill" style="width:100%" id="lunchAddBtn">記録する</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>今日食べたもの</h2>
+    <div id="lunchTodayList"></div>
+  </div>
+
+  <div class="card">
+    <h2>これまでの記録（直近14日）</h2>
+    <div id="lunchHistList"></div>
+  </div>
+</div>
+
 <!-- ================= めにゅー ================= -->
 <div class="wrap hidden" id="page-menu">
   <div class="mystat">
@@ -295,6 +333,7 @@
 
 <nav>
   <button class="on" data-page="gacha"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="8.7" cy="8.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.3" cy="8.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.7" cy="15.3" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.3" cy="15.3" r="1.1" fill="currentColor" stroke="none"/></svg>ガチャ</button>
+  <button data-page="lunch"><svg viewBox="0 0 24 24"><path d="M12 3.5c4.2 0 7.5 3.8 7.5 8.4 0 2.9-1.5 5.2-3.6 6.6H8.1c-2.1-1.4-3.6-3.7-3.6-6.6C4.5 7.3 7.8 3.5 12 3.5z"/><path d="M8.5 18.5h7v2h-7z"/></svg>ランチ</button>
   <button data-page="menu" id="navMenu"><svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6.5a2.5 2.5 0 0 0 0 5H19"/><path d="M8 7h7M8 10.5h5"/></svg>めにゅー</button>
   <button data-page="oshi"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>おしながき</button>
   <button data-page="log"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>きろく</button>
@@ -621,18 +660,20 @@ $("shareBtn").onclick=async()=>{
 
 /* ============ めにゅー登録 ============ */
 let photoData=null;
-function handlePhoto(e){
-  const f=e.target.files[0];if(!f)return;
+function shrinkPhoto(file,cb){
   const img=new Image();
   img.onload=()=>{
     const c=document.createElement("canvas");
     const s=Math.min(1,320/Math.max(img.width,img.height));
     c.width=img.width*s;c.height=img.height*s;
     c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-    photoData=c.toDataURL("image/jpeg",0.7);
-    setPhotoLabel('写真OK！<img src="'+photoData+'">');
+    cb(c.toDataURL("image/jpeg",0.7));
   };
-  img.src=URL.createObjectURL(f);
+  img.src=URL.createObjectURL(file);
+}
+function handlePhoto(e){
+  const f=e.target.files[0];if(!f)return;
+  shrinkPhoto(f,data=>{photoData=data;setPhotoLabel('写真OK！<img src="'+photoData+'">')});
 }
 function setPhotoLabel(html){
   $("photoLabel").innerHTML=html+'<input type="file" accept="image/*" id="photoInput" class="hidden">';
@@ -785,7 +826,8 @@ $("oshiImgBtn").onclick=async()=>{
 /* ============ タブ・モード切替 ============ */
 function goPage(page){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.page===page));
-  ["gacha","menu","oshi","log"].forEach(p=>$("page-"+p).classList.toggle("hidden",page!==p));
+  ["gacha","lunch","menu","oshi","log"].forEach(p=>$("page-"+p).classList.toggle("hidden",page!==p));
+  if(page==="lunch")renderLunch();
   $("main").scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goPage(b.dataset.page));
@@ -814,7 +856,7 @@ $("dietCountSeg").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{
 function refreshAll(){renderMy();renderOshi()}
 
 /* ============ プロフィールから目標カロリー計算（保存は um_profile） ============ */
-let prof=Object.assign({sex:"f",age:40,h:160,w:60,act:1.75,goal:"keep",kg:3,mon:3},store.get("profile",{}));
+let prof=Object.assign({sex:"f",age:40,h:160,w:60,act:1.75,goal:"keep",kg:3,mon:3,bf:0.25},store.get("profile",{}));
 function profCalc(){
   /* Mifflin-St Jeor 式で基礎代謝 → 活動量を掛けて1日の消費量 */
   const bmr=10*prof.w+6.25*prof.h-5*prof.age+(prof.sex==="m"?5:-161);
@@ -861,7 +903,126 @@ $("profSet").onclick=()=>{
   const r=profCalc();
   $("kcalTarget").value=r.dinner;
   $("profile").classList.add("hidden");
+  store.set("profile",prof);
+  if(!$("page-lunch").classList.contains("hidden"))renderLunch();
   toast("夕食の目標を "+r.dinner+" kcal にしました");
+};
+
+/* ============ ランチ記録（外食・コンビニ）→ 今夜の夕食予算 ============ */
+const LUNCH_GROUPS=[
+ {label:"コンビニ",items:[["おにぎり（1個）",180],["おにぎり（2個）",360],["サンドイッチ",320],["サラダチキン",120],["サラダ",150],["春雨スープ",80],["カップ麺",400],["コンビニパスタ",600],["コンビニ弁当",700],["のり弁当",750],["菓子パン",450],["ゆで卵",70],["プロテインバー",180],["ヨーグルト",100]]},
+ {label:"外食",items:[["牛丼",700],["ラーメン",800],["チェーン定食",800],["カレーライス",850],["立ち食いそば",400],["うどん",450],["ハンバーガーセット",1000],["パスタランチ",900],["中華ランチ",900],["回転寿司（8皿）",600],["焼き魚定食",650],["海鮮丼",650]]},
+ {label:"おやつ・飲み物",items:[["カフェラテ",120],["ジュース",90],["お菓子（ひと袋）",250],["アイス",250],["チョコ（ひとかけ）",60],["ドーナツ",300]]}
+];
+let lunchLog=store.get("lunchlog",[]);
+let lunchPhotoData=null;
+const dkey=ts=>{const d=new Date(ts);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+function lunchSave(){if(lunchLog.length>300)lunchLog=lunchLog.slice(-300);store.set("lunchlog",lunchLog)}
+function dinnerBudget(){
+  if(!store.get("profile",null))return null;
+  const r=profCalc();
+  const eaten=lunchLog.filter(e=>dkey(e.ts)===dkey(Date.now())).reduce((a,e)=>a+e.kcal,0);
+  return Math.max(200,Math.round((r.daily*(1-(prof.bf??0.25))-eaten)/10)*10);
+}
+function addLunch(name,kcal,photo){
+  lunchLog.push({ts:Date.now(),name,kcal,photo:photo||null});
+  lunchSave();renderLunch();
+  const b=dinnerBudget();
+  toast(b?name+"（"+kcal+"kcal）を記録。夜は "+b+" kcal が目安":name+"（"+kcal+"kcal）を記録しました");
+}
+function renderLunch(){
+  const todays=lunchLog.filter(e=>dkey(e.ts)===dkey(Date.now()));
+  const eaten=todays.reduce((a,e)=>a+e.kcal,0);
+  $("lunchTodayKcal").textContent=eaten;
+  /* 連続記録日数（今日が未記録なら昨日から数える） */
+  const days=new Set(lunchLog.map(e=>dkey(e.ts)));
+  let streak=0;const d=new Date();
+  if(!days.has(dkey(d.getTime())))d.setDate(d.getDate()-1);
+  while(days.has(dkey(d.getTime()))){streak++;d.setDate(d.getDate()-1)}
+  $("lunchStreak").textContent=streak;
+  /* 夕食予算カード */
+  const bc=$("lunchBudgetCard");
+  if(store.get("profile",null)){
+    const r=profCalc();const bf=prof.bf??0.25;const b=dinnerBudget();
+    const over=(r.daily*(1-bf)-eaten)<200;
+    bc.innerHTML='<h2>今夜、あと何kcal食べられる？</h2>'
+      +'<div style="text-align:center;margin:4px 0"><span class="bignum">'+b+'</span><span style="font-weight:800"> kcal</span></div>'
+      +'<div class="note" style="text-align:center;margin-top:0">1日の目安 '+r.daily+' − 朝食ぶん '+Math.round(r.daily*bf)+' − 今日の記録 '+eaten+' kcal'
+      +(over?'<br><span style="color:var(--pink)">今日は多め。夜は軽めの200kcalがおすすめ</span>':'')+'</div>'
+      +'<div class="rowline"><span>朝食は？</span><span class="pilltoggle" id="bfSeg">'
+      +[["0","抜き"],["0.15","軽め"],["0.25","ふつう"]].map(x=>'<button class="pill'+(bf==parseFloat(x[0])?" on":"")+'" data-bf="'+x[0]+'">'+x[1]+'</button>').join("")
+      +'</span></div>'
+      +'<button class="gobtn" id="lunchGachaBtn" style="margin-top:14px">🎲 残り '+b+' kcal で夕食ガチャ</button>';
+    bc.querySelectorAll("[data-bf]").forEach(x=>x.onclick=()=>{prof.bf=parseFloat(x.dataset.bf);store.set("profile",prof);renderLunch()});
+    $("lunchGachaBtn").onclick=()=>{
+      $("modeSeg").querySelector('[data-mode="diet"]').click();
+      $("kcalTarget").value=b;
+      goPage("gacha");
+      toast("目標 "+b+" kcal でガチャの準備OK");
+    };
+  }else{
+    bc.innerHTML='<h2>ランチを記録すると、夜ごはんがちょうどよくなる</h2>'
+      +'<div class="note">身長・体重から1日の目安を計算すると、ランチを引いた「今夜使えるkcal」がここに出ます。</div>'
+      +'<button class="btn2 fill" style="width:100%;margin-top:10px" id="lunchProfBtn">🎯 目標を設定する（30秒でおわる）</button>';
+    $("lunchProfBtn").onclick=()=>{profSync();$("profile").classList.remove("hidden")};
+  }
+  /* クイック追加 */
+  const q=$("lunchQuick");q.innerHTML="";
+  LUNCH_GROUPS.forEach(g=>{
+    const lb=document.createElement("div");lb.className="catlabel";lb.textContent=g.label;q.appendChild(lb);
+    const row=document.createElement("div");row.className="quick";
+    g.items.forEach(([n,k])=>{
+      const btn=document.createElement("button");btn.className="pill";btn.textContent="＋ "+n+"・"+k;
+      btn.onclick=()=>addLunch(n,k,null);
+      row.appendChild(btn);
+    });
+    q.appendChild(row);
+  });
+  /* 今日食べたもの */
+  const tl=$("lunchTodayList");
+  if(!todays.length){
+    tl.innerHTML='<div class="emptybox"><div class="big">🍙</div>まだ記録がありません。<br>食べたら上をタップするだけ。<br>夜のガチャがあなた仕様になります。</div>';
+  }else{
+    tl.innerHTML="";
+    todays.forEach(e=>{
+      const div=document.createElement("div");div.className="mydish";
+      const t=new Date(e.ts);
+      div.innerHTML=(e.photo?'<img src="'+e.photo+'">':'<span class="noimg">🍽</span>')
+        +'<span class="nm">'+e.name+'<small>'+("0"+t.getHours()).slice(-2)+":"+("0"+t.getMinutes()).slice(-2)+'・'+e.kcal+'kcal</small></span>'
+        +'<button class="icbtn" data-act="del" aria-label="削除">✕</button>';
+      div.querySelector("[data-act=del]").onclick=()=>{
+        if(!confirm("「"+e.name+"」の記録を削除しますか？"))return;
+        lunchLog=lunchLog.filter(x=>x.ts!==e.ts);lunchSave();renderLunch();
+      };
+      tl.appendChild(div);
+    });
+  }
+  /* 過去14日の日別サマリー */
+  const hl=$("lunchHistList");
+  const byday={};
+  lunchLog.forEach(e=>{const k=dkey(e.ts);if(k!==dkey(Date.now())){(byday[k]=byday[k]||[]).push(e)}});
+  const keys=Object.keys(byday).sort((a,b)=>byday[b][0].ts-byday[a][0].ts).slice(0,14);
+  hl.innerHTML=keys.length?keys.map(k=>{
+    const es=byday[k];const sum=es.reduce((a,e)=>a+e.kcal,0);
+    return '<div class="hist"><span class="d">'+fmtDate(es[0].ts)+'</span><span class="its">'+es.map(e=>e.name).join("・")+'</span><span class="kc">'+sum+'kcal</span></div>';
+  }).join(""):'<div class="emptybox" style="padding:14px 10px">記録がたまると、ここに日ごとの合計が並びます</div>';
+}
+function setLunchPhotoLabel(html){
+  $("lunchPhotoLabel").innerHTML=html+'<input type="file" accept="image/*" id="lunchPhotoInput" class="hidden">';
+  $("lunchPhotoInput").onchange=lunchPhotoChange;
+}
+function lunchPhotoChange(e){
+  const f=e.target.files[0];if(!f)return;
+  shrinkPhoto(f,data=>{lunchPhotoData=data;setLunchPhotoLabel('写真OK！<img src="'+lunchPhotoData+'">')});
+}
+$("lunchPhotoInput").onchange=lunchPhotoChange;
+$("lunchAddBtn").onclick=()=>{
+  const n=$("lunchName").value.trim();
+  if(!n){toast("食べたものを入力してください");return}
+  const k=parseInt($("lunchKcal").value)||400;
+  addLunch(n,k,lunchPhotoData);
+  $("lunchName").value="";$("lunchKcal").value="";lunchPhotoData=null;
+  setLunchPhotoLabel("📷 写真を追加（あとからでもOK）");
 };
 
 /* ============ 初回ガイド（オンボーディング） ============ */
@@ -873,6 +1034,7 @@ function obSlide1(){
     +'<h3>うちめにゅーへようこそ</h3><p>毎日の「今夜なに作ろう…」を、10秒で終わらせるアプリです</p></div>'
     +'<div style="margin-top:10px">'
     +'<div class="ob-feat"><div class="fi">🎲</div><div><b>献立はガチャで決める</b><span>定食・一皿・カスタマイズの3スタイル。ボタンを押すだけで今夜の献立が決まります。</span></div></div>'
+    +'<div class="ob-feat"><div class="fi">🍙</div><div><b>ランチを記録→夜がちょうどよく</b><span>外食やコンビニ飯をタップで記録。「今夜あと何kcal食べられるか」が自動で出ます。</span></div></div>'
     +'<div class="ob-feat"><div class="fi">📖</div><div><b>自分のレパートリーを登録</b><span>よく作る料理を登録すると、ガチャが「自分が作れる料理だけ」から選ぶようになります。</span></div></div>'
     +'<div class="ob-feat"><div class="fi">🍽</div><div><b>「お品書き」が自動で完成</b><span>登録した料理で、お店みたいなメニュー表ができます。画像保存や印刷もできます。</span></div></div>'
     +'</div>';

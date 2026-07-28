@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>うちめにゅー | 今夜の献立、10秒で決まる</title>
+<meta name="description" content="自分の手料理でつくる、自分だけのメニュー表。今夜の献立はガチャで決めよう。">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#fafafa; --card:#ffffff; --ink:#1c1c1e; --sub:#8e8e93; --line:#ececec;
+    --pink:#e1306c;
+    --grad:linear-gradient(45deg,#833ab4 0%,#fd1d1d 55%,#fcb045 100%);
+    --shadow:0 1px 3px rgba(0,0,0,.05);
+    --r:18px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%;height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;
+    /* アプリ型レイアウト：ヘッダー・本文・ナビの3段。ナビは常に画面下に見える */
+    height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  /* ---------- header ---------- */
+  header{background:#fff;border-bottom:1px solid var(--line);z-index:20;flex-shrink:0;
+    padding:calc(11px + env(safe-area-inset-top)) 18px 11px;display:flex;align-items:center;gap:8px}
+  .logo-dot{width:14px;height:14px;border-radius:50%;background:var(--grad);flex-shrink:0}
+  header h1{font-size:18px;font-weight:800;letter-spacing:.5px}
+  .helpbtn{margin-left:auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
+    background:#fff;color:var(--sub);font-size:15px;font-weight:800}
+  /* ---------- main（ここだけスクロール） ---------- */
+  main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .wrap{max-width:520px;margin:0 auto;padding:16px 16px 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+  h2{font-size:13px;color:var(--sub);font-weight:700;letter-spacing:.4px;margin-bottom:12px}
+  .step{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--ink);border-radius:6px;padding:2px 7px;margin-right:7px;letter-spacing:1px;vertical-align:1px}
+  .hidden{display:none!important}
+  /* ---------- segmented control ---------- */
+  .seg{display:flex;background:#f1f1f3;border-radius:12px;padding:3px;gap:2px}
+  .seg button{flex:1;border:none;background:none;border-radius:10px;padding:10px 2px;font-size:13px;font-weight:600;color:var(--sub);line-height:1.3}
+  .seg button span{display:block;font-size:17px}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.10)}
+  .seghint{font-size:12px;color:var(--sub);margin-top:10px;text-align:center;min-height:18px}
+  .rowline{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:13px;color:var(--sub)}
+  .pilltoggle{display:flex;gap:6px}
+  .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600;color:var(--sub)}
+  .pill.on{border-color:var(--pink);color:var(--pink);background:#fdf1f6}
+  input[type=number]{width:78px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;font-size:14px;text-align:right;background:#fff}
+  select,input[type=text]{padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:15px;background:#fff;width:100%;color:var(--ink);appearance:none}
+  input:focus,select:focus{outline:2px solid #f3c6d8;border-color:var(--pink)}
+  /* ---------- gacha ---------- */
+  .gobtn{display:block;width:100%;padding:17px;border:none;border-radius:14px;background:var(--grad);
+    color:#fff;font-size:17px;font-weight:800;letter-spacing:1px;box-shadow:0 6px 18px rgba(225,48,108,.28)}
+  .gobtn:active{transform:scale(.98)}
+  .gobtn:disabled{opacity:.5}
+  .slot{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;background:#fff}
+  .slot .cat{font-size:10px;font-weight:700;border-radius:6px;padding:3px 7px;white-space:nowrap;color:#fff}
+  .c主菜{background:#ff6b35}.c副菜{background:#34c759}.c汁物{background:#409cff}.c主食{background:#f7b32b}.c一皿{background:#af52de}
+  .slot .name{font-size:16px;font-weight:700;flex:1;min-height:22px}
+  .slot.spin .name{color:var(--pink)}
+  .slot .meta{font-size:11px;color:var(--sub);white-space:nowrap;text-align:right;line-height:1.35}
+  .slot .re{border:none;background:#f1f1f3;border-radius:10px;width:40px;height:40px;font-size:16px;flex-shrink:0}
+  .rehint{font-size:11px;color:var(--sub);text-align:right;margin:-2px 4px 8px}
+  .total{display:flex;justify-content:space-between;align-items:center;margin:12px 2px;font-size:13px;color:var(--sub)}
+  .total b{color:var(--ink);font-size:15px}
+  .actions{display:flex;gap:8px;margin-top:12px}
+  .btn2{flex:1;padding:14px;border-radius:12px;border:1px solid var(--line);color:var(--ink);background:#fff;font-size:14px;font-weight:700}
+  .btn2.fill{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .note{font-size:11px;color:var(--sub);margin-top:10px;line-height:1.6}
+  .emptybox{text-align:center;padding:26px 10px;color:var(--sub);font-size:13px;line-height:1.9}
+  .emptybox .big{font-size:34px}
+  /* ---------- menu ---------- */
+  .mystat{display:flex;gap:10px;margin-bottom:14px}
+  .stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;text-align:center}
+  .stat .num{font-size:24px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .lbl{font-size:11px;color:var(--sub);font-weight:600}
+  .formrow{display:flex;gap:8px;margin-bottom:10px}
+  .photolabel{display:block;text-align:center;border:1.5px dashed #ddd;border-radius:14px;padding:12px;font-size:13px;color:var(--sub);margin-bottom:10px;font-weight:600}
+  .photolabel img{max-height:96px;border-radius:12px;margin-top:8px;display:inline-block}
+  .catlabel{font-size:11px;font-weight:800;color:var(--sub);letter-spacing:1px;margin:14px 0 4px}
+  .mydish{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .mydish:last-child{border-bottom:none}
+  .mydish img,.mydish .noimg{width:46px;height:46px;border-radius:12px;object-fit:cover;background:#f1f1f3;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .mydish .nm{flex:1;font-size:14px;font-weight:600;min-width:0}
+  .mydish .nm small{display:block;font-weight:500;color:var(--sub);font-size:11px}
+  .icbtn{border:none;background:none;font-size:17px;padding:7px;color:var(--sub)}
+  .quick{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .quick .pill{padding:9px 13px;font-size:13px}
+  .quick .pill.on{border-color:#34c759;color:#34c759;background:#f0fbf2}
+  details summary{font-size:13px;color:var(--sub);font-weight:700;padding:2px 0;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:" ▾"}
+  details[open] summary::after{content:" ▴"}
+  /* ---------- oshinagaki ---------- */
+  .paper{background:#f9f5ec;border:1px solid #e8dfcc;border-radius:6px;padding:26px 20px;
+    font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;color:#2b2620;position:relative}
+  .paper::before{content:"";position:absolute;inset:7px;border:1px solid #d9cdb2;border-radius:3px;pointer-events:none}
+  .paper h3{text-align:center;font-size:21px;font-weight:600;letter-spacing:6px;margin-bottom:2px}
+  .paper .sub{text-align:center;font-size:10.5px;color:#9a8d76;letter-spacing:3px;margin-bottom:18px}
+  .paper .cat-h{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:4px;color:#8a7a5c;margin:16px 0 8px}
+  .paper .cat-h::before,.paper .cat-h::after{content:"";height:1px;background:#d9cdb2;flex:1}
+  .paper .dish{display:flex;align-items:center;gap:10px;padding:6px 4px;font-size:14.5px;letter-spacing:1px}
+  .paper .dish .thumb{width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid #d9cdb2}
+  .paper .dish .fav{color:#c9a227;font-size:12px}
+  .paper .dish .dots{flex:1;border-bottom:1px dotted #c9bda1;margin:0 4px;height:1em}
+  .paper .dish .kc{font-size:11px;color:#9a8d76;white-space:nowrap}
+  .paper .footer{text-align:center;font-size:10px;color:#b0a68f;letter-spacing:2px;margin-top:20px}
+  .oshi-actions{display:flex;gap:8px;margin-top:14px}
+  .upsell{margin-top:10px;border:1.5px dashed #e5c8d6;background:#fdf7fa;border-radius:14px;padding:14px;font-size:12.5px;color:#a4547c;line-height:1.7}
+  /* ---------- history ---------- */
+  .hist{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}
+  .hist:last-child{border-bottom:none}
+  .hist .d{font-size:12px;color:var(--sub);font-weight:700;white-space:nowrap;width:44px}
+  .hist .its{flex:1;font-weight:600}
+  .hist .kc{font-size:11px;color:var(--sub);white-space:nowrap}
+  /* ---------- nav（flexの最下段＝常に見える） ---------- */
+  nav{background:#fff;border-top:1px solid var(--line);display:flex;z-index:20;flex-shrink:0;
+    padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;border:none;background:none;padding:9px 0 7px;font-size:10px;color:var(--sub);font-weight:600;position:relative}
+  nav button svg{display:block;margin:0 auto 3px;width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  nav button.on{color:var(--ink)}
+  nav button .badge{position:absolute;top:4px;left:50%;margin-left:10px;width:8px;height:8px;border-radius:50%;background:var(--pink)}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(28,28,30,.94);color:#fff;
+    padding:11px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40;white-space:nowrap}
+  .toast.show{opacity:1}
+  /* ---------- onboarding ---------- */
+  #onboard{position:fixed;inset:0;background:#fff;z-index:50;display:flex;flex-direction:column;overflow:hidden}
+  #onboard .ob-body{flex:1;overflow-y:auto;padding:20px;max-width:520px;margin:0 auto;width:100%}
+  #onboard .ob-foot{flex-shrink:0;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);max-width:520px;margin:0 auto;width:100%;background:#fff}
+  .ob-hero{text-align:center;padding:36px 0 8px}
+  .ob-hero .icon{width:76px;height:76px;border-radius:22px;margin:0 auto 18px;display:block}
+  .ob-hero h3{font-size:22px;font-weight:800;letter-spacing:.5px}
+  .ob-hero p{font-size:13px;color:var(--sub);margin-top:6px}
+  .ob-feat{display:flex;gap:14px;align-items:flex-start;padding:14px 6px;border-bottom:1px solid var(--line)}
+  .ob-feat:last-child{border-bottom:none}
+  .ob-feat .fi{font-size:26px;flex-shrink:0;width:40px;text-align:center}
+  .ob-feat b{font-size:15px;display:block}
+  .ob-feat span{font-size:12.5px;color:var(--sub);line-height:1.6}
+  .ob-count{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);padding:10px 0;text-align:center;font-size:13px;font-weight:700;z-index:2}
+  .ob-count b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:17px}
+  .skipbtn{display:block;width:100%;text-align:center;border:none;background:none;color:var(--sub);font-size:13px;font-weight:600;padding:12px 0 2px}
+  .dots-ind{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+  .dots-ind i{width:6px;height:6px;border-radius:50%;background:#e3e3e6}
+  .dots-ind i.on{background:var(--ink);width:18px;border-radius:3px}
+  /* ---------- print ---------- */
+  @media print{
+    header,nav,.no-print,.oshi-actions,.upsell,#onboard{display:none!important}
+    body{background:#fff;height:auto;overflow:visible;display:block}
+    main{overflow:visible}
+    .wrap{max-width:none;padding:0}
+    .card{border:none;box-shadow:none;padding:0}
+    .paper{border-radius:0;min-height:96vh}
+  }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo-dot"></span><h1>うちめにゅー</h1>
+  <button class="helpbtn" id="helpBtn" aria-label="使い方">?</button>
+</header>
+
+<main id="main">
+<!-- ================= ガチャ ================= -->
+<div class="wrap" id="page-gacha">
+  <div class="card">
+    <h2><span class="step">1</span>今夜のスタイルをえらぶ</h2>
+    <div class="seg" id="modeSeg">
+      <button class="on" data-mode="teishoku"><span>🍱</span>定食</button>
+      <button data-mode="quick"><span>⚡</span>一皿で手軽に</button>
+      <button data-mode="diet"><span>🥗</span>ダイエット</button>
+    </div>
+    <div class="seghint" id="segHint">主菜・副菜・汁物・ごはんの4品が出ます</div>
+    <div class="rowline hidden" id="dietRow">
+      <span>夕食の目標カロリー</span>
+      <span><input type="number" id="kcalTarget" value="600" step="50" min="300"> kcal</span>
+    </div>
+    <div class="rowline hidden" id="srcRow">
+      <span>ガチャに入る料理</span>
+      <span class="pilltoggle">
+        <button class="pill on" data-src="all" id="srcAll">定番から</button>
+        <button class="pill" data-src="mine" id="srcMine">うちの料理から</button>
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span>ボタンを押すだけ</h2>
+    <div id="slots"></div>
+    <div class="rehint hidden" id="rehint">気に入らない料理は ↺ で1品だけ引き直せます</div>
+    <div class="total hidden" id="totalRow"><span>合計（目安）</span><span><b id="totalKcal">-</b> kcal ・ 調理 約<b id="totalMin">-</b> 分</span></div>
+    <button class="gobtn" id="goBtn">🎲 ガチャをまわす</button>
+    <div class="actions hidden" id="resultActions">
+      <button class="btn2" id="shareBtn">友だちに共有</button>
+      <button class="btn2 fill" id="decideBtn">✓ これに決めた</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= めにゅー ================= -->
+<div class="wrap hidden" id="page-menu">
+  <div class="mystat">
+    <div class="stat"><div class="num" id="statCount">0</div><div class="lbl">レパートリー</div></div>
+    <div class="stat"><div class="num" id="statCooked">0</div><div class="lbl">今月つくった</div></div>
+  </div>
+
+  <div class="card">
+    <h2>かんたん追加：定番からタップでえらぶ</h2>
+    <div class="quick" id="quickList"></div>
+  </div>
+
+  <div class="card">
+    <details id="formBox">
+      <summary>リストにない料理を自分で登録する</summary>
+      <div style="margin-top:12px">
+        <label class="photolabel" id="photoLabel">📷 写真を追加（あとからでもOK）<input type="file" accept="image/*" id="photoInput" class="hidden"></label>
+        <div class="formrow"><input type="text" id="newName" placeholder="料理名（例：肉じゃが）" list="dishSuggest"><datalist id="dishSuggest"></datalist></div>
+        <div class="formrow">
+          <select id="newCat"><option value="主菜">主菜</option><option value="副菜">副菜</option><option value="汁物">汁物</option><option value="主食">主食</option><option value="一皿">一皿もの（丼・麺・カレー）</option></select>
+          <input type="number" id="newKcal" placeholder="kcal" style="width:110px">
+        </div>
+        <button class="btn2 fill" style="width:100%" id="addBtn">めにゅーに追加</button>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>うちのめにゅー（登録済み）</h2>
+    <div id="myList"></div>
+  </div>
+</div>
+
+<!-- ================= おしながき ================= -->
+<div class="wrap hidden" id="page-oshi">
+  <div class="card no-print">
+    <h2>おうちの名前を入れると「◯◯家のお品書き」になります</h2>
+    <div class="formrow" style="margin-bottom:0">
+      <input type="text" id="familyName" placeholder="例：やまだ" maxlength="10">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="paper" id="paper"></div>
+    <div class="oshi-actions no-print">
+      <button class="btn2" id="oshiImgBtn">📷 画像で保存</button>
+      <button class="btn2" id="oshiPrintBtn">🖨 印刷・PDF</button>
+    </div>
+    <div class="upsell no-print">
+      <b>じぶんちのメニュー表を、お店みたいに。</b><br>
+      厚紙・ラミネート仕上げの「お品書き」お届けサービスを準備中です。母の日や新築祝いの贈り物にも。
+    </div>
+  </div>
+</div>
+
+<!-- ================= きろく ================= -->
+<div class="wrap hidden" id="page-log">
+  <div class="card">
+    <h2>ごはんのきろく</h2>
+    <div id="histList"></div>
+  </div>
+</div>
+</main>
+
+<nav>
+  <button class="on" data-page="gacha"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="8.7" cy="8.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.3" cy="8.7" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.7" cy="15.3" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.3" cy="15.3" r="1.1" fill="currentColor" stroke="none"/></svg>ガチャ</button>
+  <button data-page="menu" id="navMenu"><svg viewBox="0 0 24 24"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6.5a2.5 2.5 0 0 0 0 5H19"/><path d="M8 7h7M8 10.5h5"/></svg>めにゅー</button>
+  <button data-page="oshi"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></svg>おしながき</button>
+  <button data-page="log"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>きろく</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<!-- ================= 初回ガイド ================= -->
+<div id="onboard" class="hidden">
+  <div class="ob-body" id="obBody"></div>
+  <div class="ob-foot">
+    <div class="dots-ind" id="obDots"></div>
+    <button class="gobtn" id="obNext">つぎへ</button>
+    <button class="skipbtn" id="obSkip">スキップしてはじめる</button>
+  </div>
+</div>
+
+<script>
+/* ============ 定番料理マスタ（静的辞書・通信なし／[名前,カテゴリ,kcal,分,ヘルシー]） ============ */
+const PRESET=[
+["肉じゃが","主菜",250,40,0],["鶏の唐揚げ","主菜",400,30,0],["豚の生姜焼き","主菜",350,20,0],
+["ハンバーグ","主菜",450,40,0],["鮭の塩焼き","主菜",200,15,1],["さばの味噌煮","主菜",300,25,0],
+["ぶりの照り焼き","主菜",280,20,1],["麻婆豆腐","主菜",300,25,0],["回鍋肉","主菜",350,20,0],
+["青椒肉絲","主菜",280,25,0],["鶏の照り焼き","主菜",350,20,0],["とんかつ","主菜",500,30,0],
+["エビフライ","主菜",400,30,0],["餃子","主菜",350,40,0],["肉野菜炒め","主菜",280,15,1],
+["鶏むねの塩麹焼き","主菜",220,20,1],["豚しゃぶサラダ","主菜",250,15,1],["チキン南蛮","主菜",550,35,0],
+["さわらの西京焼き","主菜",220,15,1],["肉豆腐","主菜",300,20,0],["ロールキャベツ","主菜",250,45,1],
+["白身魚のムニエル","主菜",250,20,1],["鶏と大根の煮物","主菜",230,35,1],["油淋鶏","主菜",420,30,0],
+["ほうれん草のおひたし","副菜",30,10,1],["きんぴらごぼう","副菜",90,15,1],["ポテトサラダ","副菜",180,20,0],
+["冷奴","副菜",80,3,1],["枝豆","副菜",70,10,1],["かぼちゃの煮物","副菜",120,20,1],
+["ひじきの煮物","副菜",90,20,1],["切干大根の煮物","副菜",80,20,1],["もやしナムル","副菜",60,8,1],
+["きゅうりの酢の物","副菜",30,8,1],["ブロッコリーの胡麻和え","副菜",70,10,1],["マカロニサラダ","副菜",200,15,0],
+["卵焼き","副菜",150,10,0],["なすの揚げ浸し","副菜",130,15,0],["トマトとアボカドのサラダ","副菜",120,8,1],
+["キャベツの浅漬け","副菜",25,5,1],["春雨サラダ","副菜",110,12,1],["温野菜サラダ","副菜",90,12,1],
+["無限ピーマン","副菜",100,10,1],["大根と水菜のサラダ","副菜",60,8,1],
+["豆腐とわかめの味噌汁","汁物",50,8,1],["豚汁","汁物",180,25,0],["けんちん汁","汁物",120,20,1],
+["コンソメスープ","汁物",60,10,1],["かき玉スープ","汁物",70,8,1],["わかめスープ","汁物",40,6,1],
+["コーンスープ","汁物",130,8,0],["ミネストローネ","汁物",120,20,1],["中華スープ","汁物",70,10,1],
+["あさりの味噌汁","汁物",45,10,1],
+["白ごはん","主食",235,5,0],["雑穀ごはん","主食",220,5,1],["玄米ごはん","主食",220,5,1],
+["炊き込みごはん","主食",300,50,0],["トースト","主食",190,5,0],
+["カレーライス","一皿",700,40,0],["親子丼","一皿",650,20,0],["牛丼","一皿",700,20,0],
+["チャーハン","一皿",650,15,0],["オムライス","一皿",700,25,0],["ナポリタン","一皿",600,20,0],
+["ペペロンチーノ","一皿",550,15,0],["ミートソースパスタ","一皿",650,25,0],["焼きそば","一皿",550,15,0],
+["かけうどん","一皿",350,10,1],["冷やしうどん","一皿",400,10,1],["ラーメン","一皿",500,15,0],
+["ざるそば","一皿",350,10,1],["天津飯","一皿",600,15,0],["ロコモコ丼","一皿",750,25,0],
+["タコライス","一皿",650,20,0],["ビビンバ丼","一皿",600,20,1],["鍋焼きうどん","一皿",450,15,0],
+["カルボナーラ","一皿",750,20,0],["冷やし中華","一皿",500,15,1],["海鮮丼","一皿",550,10,1],
+["卵かけごはん","一皿",300,3,0],["そうめん","一皿",350,8,1]
+].map((d,i)=>({id:"p"+i,name:d[0],cat:d[1],kcal:d[2],min:d[3],healthy:!!d[4]}));
+const CATS=["主菜","副菜","汁物","主食","一皿"];
+
+/* ============ 保存（localStorage不可環境でも動くフォールバック付き） ============ */
+const mem={};
+const store={
+  get(k,def){try{const v=localStorage.getItem("um_"+k);return v?JSON.parse(v):def}catch(e){return mem[k]??def}},
+  set(k,v){try{localStorage.setItem("um_"+k,JSON.stringify(v))}catch(e){mem[k]=v}}
+};
+let myMenu=store.get("menu",[]);
+let history=store.get("hist",[]);
+let recent=store.get("recent",{});
+let family=store.get("family","");
+
+const $=id=>document.getElementById(id);
+const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2000)};
+let mode="teishoku",source="all",current=[];
+
+/* ============ 抽選ロジック（最近出た料理は出にくい重み付き） ============ */
+function pick(pool,exclude){
+  const cand=pool.filter(d=>!exclude.includes(d.name));
+  const list=cand.length?cand:pool;
+  const now=Date.now();
+  const w=list.map(d=>{
+    const days=(now-(recent[d.name]||0))/86400000;
+    let base=days<1?0.15:days<3?0.5:1;
+    if(d.fav)base*=1.4;
+    return base;
+  });
+  let r=Math.random()*w.reduce((a,b)=>a+b,0);
+  for(let i=0;i<list.length;i++){r-=w[i];if(r<=0)return list[i]}
+  return list[list.length-1];
+}
+function poolOf(cat){
+  if(source==="mine"){
+    const mine=myMenu.filter(d=>d.cat===cat);
+    if(mine.length>=2)return mine;
+    return [...mine,...PRESET.filter(d=>d.cat===cat)];
+  }
+  return PRESET.filter(d=>d.cat===cat);
+}
+function drawMenu(){
+  if(mode==="quick")return [pick(poolOf("一皿"),[])];
+  if(mode==="diet"){
+    const target=parseInt($("kcalTarget").value)||600;
+    let best=null;
+    for(let i=0;i<80;i++){
+      const combo=["主菜","副菜","汁物","主食"].map(c=>pick(poolOf(c),[]));
+      const total=combo.reduce((a,d)=>a+d.kcal,0);
+      if(total<=target)return combo;
+      if(!best||total<best.reduce((a,d)=>a+d.kcal,0))best=combo;
+    }
+    return best;
+  }
+  const ex=[];
+  return ["主菜","副菜","汁物","主食"].map(c=>{const d=pick(poolOf(c),ex);ex.push(d.name);return d});
+}
+
+/* ============ スロット演出 ============ */
+function renderSlots(menu,spin){
+  const box=$("slots");box.innerHTML="";
+  menu.forEach((d,i)=>{
+    const div=document.createElement("div");
+    div.className="slot"+(spin?" spin":"");
+    div.innerHTML='<span class="cat c'+d.cat+'">'+d.cat+'</span>'
+      +'<span class="name" id="slotName'+i+'">'+(spin?"…":d.name)+'</span>'
+      +'<span class="meta">'+d.kcal+'kcal<br>約'+d.min+'分</span>'
+      +'<button class="re" data-i="'+i+'" aria-label="この料理だけ引き直す">↺</button>';
+    box.appendChild(div);
+  });
+  box.querySelectorAll(".re").forEach(b=>b.onclick=()=>reroll(parseInt(b.dataset.i)));
+  updateTotal(menu);
+}
+function updateTotal(menu){
+  $("totalRow").classList.remove("hidden");
+  $("totalKcal").textContent=menu.reduce((a,d)=>a+d.kcal,0);
+  $("totalMin").textContent=Math.max(...menu.map(d=>d.min));
+}
+function spinTo(menu){
+  renderSlots(menu,true);
+  $("goBtn").disabled=true;
+  const pools=menu.map(d=>poolOf(d.cat));
+  menu.forEach((d,i)=>{
+    const el=$("slotName"+i);
+    const iv=setInterval(()=>{el.textContent=pools[i][Math.floor(Math.random()*pools[i].length)].name},65);
+    setTimeout(()=>{
+      clearInterval(iv);el.textContent=d.name;el.parentElement.classList.remove("spin");
+      if(i===menu.length-1){
+        $("goBtn").disabled=false;
+        $("resultActions").classList.remove("hidden");
+        $("rehint").classList.remove("hidden");
+        $("goBtn").textContent="🎲 もう一回まわす";
+      }
+    },850+i*420);
+  });
+}
+function reroll(i){
+  if(!current.length)return;
+  const others=current.filter((_,j)=>j!==i).map(d=>d.name);
+  current[i]=pick(poolOf(current[i].cat),[...others,current[i].name]);
+  recent[current[i].name]=Date.now();store.set("recent",recent);
+  renderSlots(current,false);
+  $("resultActions").classList.remove("hidden");
+}
+$("goBtn").onclick=()=>{
+  current=drawMenu();
+  current.forEach(d=>recent[d.name]=Date.now());
+  store.set("recent",recent);
+  $("resultActions").classList.add("hidden");
+  spinTo(current);
+};
+
+/* ============ 決定・記録・共有 ============ */
+function fmtDate(ts){const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()}
+function renderHist(){
+  const box=$("histList");
+  if(!history.length){
+    box.innerHTML='<div class="emptybox"><div class="big">📅</div>まだ記録がありません。<br>ガチャで「✓ これに決めた」を押すと<br>ここに献立が残っていきます。</div>';
+  }else{
+    box.innerHTML=history.slice(-30).reverse().map(h=>
+      '<div class="hist"><span class="d">'+fmtDate(h.ts)+'</span><span class="its">'+h.items.join("・")+'</span><span class="kc">'+h.kcal+'kcal</span></div>').join("");
+  }
+  const now=new Date();
+  $("statCooked").textContent=history.filter(h=>{const d=new Date(h.ts);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;
+}
+$("decideBtn").onclick=()=>{
+  if(!current.length)return;
+  history.push({ts:Date.now(),items:current.map(d=>d.name),kcal:current.reduce((a,d)=>a+d.kcal,0)});
+  store.set("hist",history);
+  renderHist();
+  toast("今夜の献立を「きろく」に残しました");
+};
+$("shareBtn").onclick=async()=>{
+  if(!current.length)return;
+  const text="今夜の献立ガチャ結果 🎲\n"+current.map(d=>d.cat+"："+d.name).join("\n")+"\n合計 約"+current.reduce((a,d)=>a+d.kcal,0)+"kcal\n#うちめにゅー";
+  if(navigator.share){try{await navigator.share({text})}catch(e){}}
+  else{try{await navigator.clipboard.writeText(text);toast("結果をコピーしました")}catch(e){toast("コピーできませんでした")}}
+};
+
+/* ============ めにゅー登録 ============ */
+let photoData=null;
+function handlePhoto(e){
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement("canvas");
+    const s=Math.min(1,320/Math.max(img.width,img.height));
+    c.width=img.width*s;c.height=img.height*s;
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    photoData=c.toDataURL("image/jpeg",0.7);
+    setPhotoLabel('写真OK！<img src="'+photoData+'">');
+  };
+  img.src=URL.createObjectURL(f);
+}
+function setPhotoLabel(html){
+  $("photoLabel").innerHTML=html+'<input type="file" accept="image/*" id="photoInput" class="hidden">';
+  $("photoInput").onchange=handlePhoto;
+}
+$("photoInput").onchange=handlePhoto;
+const dl=$("dishSuggest");
+PRESET.forEach(d=>{const o=document.createElement("option");o.value=d.name;dl.appendChild(o)});
+$("newName").oninput=()=>{
+  const hit=PRESET.find(d=>d.name===$("newName").value);
+  if(hit){$("newCat").value=hit.cat;$("newKcal").value=hit.kcal}
+};
+$("addBtn").onclick=()=>{
+  const name=$("newName").value.trim();
+  if(!name){toast("料理名を入力してください");return}
+  const preset=PRESET.find(d=>d.name===name);
+  myMenu.push({id:"m"+Date.now(),name:name,cat:$("newCat").value,
+    kcal:parseInt($("newKcal").value)||(preset?preset.kcal:300),
+    min:preset?preset.min:20,photo:photoData,fav:false});
+  store.set("menu",myMenu);
+  $("newName").value="";$("newKcal").value="";photoData=null;
+  setPhotoLabel("📷 写真を追加（あとからでもOK）");
+  refreshAll();
+  toast("「"+name+"」を追加しました");
+};
+function addPreset(p){
+  myMenu.push({id:"m"+Date.now()+Math.random().toString(36).slice(2,6),name:p.name,cat:p.cat,kcal:p.kcal,min:p.min,photo:null,fav:false});
+}
+function renderMy(){
+  $("statCount").textContent=myMenu.length;
+  const box=$("myList");
+  if(!myMenu.length){
+    box.innerHTML='<div class="emptybox"><div class="big">🍽</div>まだ登録がありません。<br>上の「定番からえらぶ」をタップするだけでOK。<br><b>8品</b>そろうとガチャが自分仕様になります。</div>';
+  }else{
+    box.innerHTML="";
+    CATS.forEach(cat=>{
+      const items=myMenu.filter(d=>d.cat===cat);
+      if(!items.length)return;
+      const lb=document.createElement("div");lb.className="catlabel";lb.textContent=cat;box.appendChild(lb);
+      items.forEach(d=>{
+        const div=document.createElement("div");div.className="mydish";
+        div.innerHTML=(d.photo?'<img src="'+d.photo+'">':'<span class="noimg">🍽</span>')
+          +'<span class="nm">'+d.name+'<small>'+d.kcal+'kcal・約'+d.min+'分</small></span>'
+          +'<button class="icbtn" data-act="fav" aria-label="お気に入り">'+(d.fav?"⭐":"☆")+'</button>'
+          +'<button class="icbtn" data-act="del" aria-label="削除">✕</button>';
+        div.querySelector('[data-act=fav]').onclick=()=>{d.fav=!d.fav;store.set("menu",myMenu);refreshAll()};
+        div.querySelector('[data-act=del]').onclick=()=>{
+          myMenu=myMenu.filter(x=>x.id!==d.id);store.set("menu",myMenu);refreshAll();
+        };
+        box.appendChild(div);
+      });
+    });
+  }
+  /* 8品以上で「うちの料理から」トグルを出す（少ないうちは見せない＝迷わせない） */
+  const ok=myMenu.length>=8;
+  $("srcRow").classList.toggle("hidden",!ok);
+  if(!ok&&source==="mine"){source="all";$("srcAll").classList.add("on");$("srcMine").classList.remove("on")}
+  renderQuick();
+}
+function renderQuick(){
+  const box=$("quickList");box.innerHTML="";
+  PRESET.slice(0,48).forEach(p=>{
+    const has=myMenu.some(d=>d.name===p.name);
+    const b=document.createElement("button");
+    b.className="pill"+(has?" on":"");b.textContent=(has?"✓ ":"＋ ")+p.name;
+    b.onclick=()=>{
+      if(has){myMenu=myMenu.filter(d=>d.name!==p.name)}
+      else{addPreset(p)}
+      store.set("menu",myMenu);refreshAll();
+    };
+    box.appendChild(b);
+  });
+}
+
+/* ============ おしながき ============ */
+$("familyName").value=family;
+$("familyName").oninput=()=>{family=$("familyName").value.trim();store.set("family",family);renderOshi()};
+function oshiTitle(){return (family?family+"家":"うち")+"のお品書き"}
+function renderOshi(){
+  const p=$("paper");
+  const today=new Date();
+  const dateStr=today.getFullYear()+"年"+(today.getMonth()+1)+"月";
+  let html='<h3>'+oshiTitle()+'</h3><div class="sub">'+dateStr+'・全'+myMenu.length+'品</div>';
+  if(!myMenu.length){
+    html+='<p style="text-align:center;font-size:13px;color:#9a8d76;padding:24px 0">「めにゅー」タブで料理を登録すると<br>ここにお品書きができあがります</p>';
+  }else{
+    const catName={"主菜":"主菜","副菜":"副菜","汁物":"汁もの","主食":"ごはん","一皿":"丼・麺"};
+    CATS.forEach(cat=>{
+      const items=myMenu.filter(d=>d.cat===cat);
+      if(!items.length)return;
+      html+='<div class="cat-h">'+catName[cat]+'</div>';
+      items.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)).forEach(d=>{
+        html+='<div class="dish">'+(d.photo?'<img class="thumb" src="'+d.photo+'">':'')
+          +'<span>'+d.name+'</span>'+(d.fav?'<span class="fav">★</span>':'')
+          +'<span class="dots"></span><span class="kc">'+d.kcal+' kcal</span></div>';
+      });
+    });
+  }
+  html+='<div class="footer">うちめにゅー</div>';
+  p.innerHTML=html;
+}
+$("oshiPrintBtn").onclick=()=>window.print();
+$("oshiImgBtn").onclick=async()=>{
+  if(!myMenu.length){toast("まず「めにゅー」で料理を登録してください");return}
+  const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;
+  const g=c.getContext("2d");
+  g.fillStyle="#f9f5ec";g.fillRect(0,0,W,H);
+  g.strokeStyle="#d9cdb2";g.lineWidth=3;g.strokeRect(36,36,W-72,H-72);
+  g.strokeRect(48,48,W-96,H-96);
+  g.fillStyle="#2b2620";g.textAlign="center";
+  g.font="600 64px 'Hiragino Mincho ProN','Yu Mincho',serif";
+  g.fillText(oshiTitle(),W/2,170);
+  g.fillStyle="#9a8d76";g.font="26px 'Hiragino Mincho ProN',serif";
+  const today=new Date();
+  g.fillText(today.getFullYear()+"年"+(today.getMonth()+1)+"月 ・ 全"+myMenu.length+"品",W/2,225);
+  let y=310;
+  const catName={"主菜":"主菜","副菜":"副菜","汁物":"汁もの","主食":"ごはん","一皿":"丼・麺"};
+  const fs=myMenu.length>16?30:36;
+  outer:
+  for(const cat of CATS){
+    const items=myMenu.filter(d=>d.cat===cat);
+    if(!items.length)continue;
+    g.fillStyle="#8a7a5c";g.font="600 26px 'Hiragino Mincho ProN',serif";
+    g.fillText("― "+catName[cat]+" ―",W/2,y);y+=52;
+    g.fillStyle="#2b2620";g.font=fs+"px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    for(const d of items){
+      if(y>H-140){g.fillStyle="#9a8d76";g.font="26px serif";g.fillText("…ほか",W/2,y);break outer}
+      g.fillText(d.name+(d.fav?" ★":""),W/2,y);y+=fs+18;
+    }
+    y+=18;
+  }
+  g.fillStyle="#b0a68f";g.font="24px sans-serif";g.fillText("うちめにゅー",W/2,H-70);
+  c.toBlob(async blob=>{
+    const file=new File([blob],"oshinagaki.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file],text:"#うちめにゅー"});return}catch(e){}
+    }
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="oshinagaki.png";a.click();
+    toast("画像を保存しました");
+  },"image/png");
+};
+
+/* ============ タブ・モード切替 ============ */
+function goPage(page){
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.page===page));
+  ["gacha","menu","oshi","log"].forEach(p=>$("page-"+p).classList.toggle("hidden",page!==p));
+  $("main").scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goPage(b.dataset.page));
+const SEG_HINTS={teishoku:"主菜・副菜・汁物・ごはんの4品が出ます",quick:"丼・麺・カレーなど1品だけ。忙しい日はこれ",diet:"目標カロリー内におさまる組み合わせが出ます"};
+$("modeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+  $("modeSeg").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+  mode=b.dataset.mode;
+  $("segHint").textContent=SEG_HINTS[mode];
+  $("dietRow").classList.toggle("hidden",mode!=="diet");
+  $("slots").innerHTML="";$("totalRow").classList.add("hidden");$("resultActions").classList.add("hidden");$("rehint").classList.add("hidden");
+  $("goBtn").textContent="🎲 ガチャをまわす";current=[];
+});
+[$("srcAll"),$("srcMine")].forEach(b=>b.onclick=()=>{
+  $("srcAll").classList.toggle("on",b.dataset.src==="all");
+  $("srcMine").classList.toggle("on",b.dataset.src==="mine");
+  source=b.dataset.src;
+  toast(source==="mine"?"あなたが登録した料理から選びます":"定番の料理から選びます");
+});
+
+function refreshAll(){renderMy();renderOshi()}
+
+/* ============ 初回ガイド（オンボーディング） ============ */
+let obStep=0;
+const obPicked=new Set();
+function obSlide1(){
+  return '<div class="ob-hero">'
+    +'<img class="icon" src="icon-192.png" alt="">'
+    +'<h3>うちめにゅーへようこそ</h3><p>毎日の「今夜なに作ろう…」を、10秒で終わらせるアプリです</p></div>'
+    +'<div style="margin-top:10px">'
+    +'<div class="ob-feat"><div class="fi">🎲</div><div><b>献立はガチャで決める</b><span>定食・一皿・ダイエットの3スタイル。ボタンを押すだけで今夜の献立が決まります。</span></div></div>'
+    +'<div class="ob-feat"><div class="fi">📖</div><div><b>自分のレパートリーを登録</b><span>よく作る料理を登録すると、ガチャが「自分が作れる料理だけ」から選ぶようになります。</span></div></div>'
+    +'<div class="ob-feat"><div class="fi">🍽</div><div><b>「お品書き」が自動で完成</b><span>登録した料理で、お店みたいなメニュー表ができます。画像保存や印刷もできます。</span></div></div>'
+    +'</div>';
+}
+function obSlide2(){
+  let html='<div class="ob-count">ふだん作る料理をタップ　<b id="obCnt">'+obPicked.size+'</b> 品えらんだ<br><span style="font-size:11px;color:var(--sub);font-weight:500">あとで変更できます。わからなければスキップでOK</span></div>';
+  const catName={"主菜":"主菜（メイン）","副菜":"副菜（もう一品）","汁物":"汁物","主食":"ごはん・パン","一皿":"丼・麺・カレー"};
+  CATS.forEach(cat=>{
+    html+='<div class="catlabel">'+catName[cat]+'</div><div class="quick">';
+    PRESET.filter(p=>p.cat===cat).slice(0,10).forEach(p=>{
+      const on=obPicked.has(p.name);
+      html+='<button class="pill'+(on?" on":"")+'" data-ob="'+p.name+'">'+(on?"✓ ":"＋ ")+p.name+'</button>';
+    });
+    html+='</div>';
+  });
+  return html;
+}
+function obSlide3(){
+  return '<div class="ob-hero"><div style="font-size:56px">🎲</div>'
+    +'<h3>じゅんび完了！</h3><p>'+(obPicked.size?obPicked.size+"品を「うちのめにゅー」に登録しました":"まずは定番料理でガチャが回せます")+'</p></div>'
+    +'<div style="margin-top:10px">'
+    +'<div class="ob-feat"><div class="fi">1️⃣</div><div><b>ガチャをまわす</b><span>下の「ガチャ」タブで、ボタンを押すだけ。</span></div></div>'
+    +'<div class="ob-feat"><div class="fi">2️⃣</div><div><b>気に入らなければ ↺</b><span>1品だけ引き直しもできます。</span></div></div>'
+    +'<div class="ob-feat"><div class="fi">3️⃣</div><div><b>「✓ これに決めた」で記録</b><span>作った献立が「きろく」に貯まっていきます。</span></div></div>'
+    +'</div>';
+}
+function obRender(){
+  const body=$("obBody");
+  body.innerHTML=[obSlide1,obSlide2,obSlide3][obStep]();
+  $("obDots").innerHTML=[0,1,2].map(i=>'<i class="'+(i===obStep?"on":"")+'"></i>').join("");
+  $("obNext").textContent=obStep===0?"つぎへ":obStep===1?(obPicked.size?"えらんだ料理ではじめる":"つぎへ"):"🎲 ガチャをまわしてみる";
+  $("obSkip").style.visibility=obStep===2?"hidden":"visible";
+  if(obStep===1){
+    body.querySelectorAll("[data-ob]").forEach(b=>b.onclick=()=>{
+      const n=b.dataset.ob;
+      if(obPicked.has(n)){obPicked.delete(n)}else{obPicked.add(n)}
+      b.classList.toggle("on");b.textContent=(obPicked.has(n)?"✓ ":"＋ ")+n;
+      const c=$("obCnt");if(c)c.textContent=obPicked.size;
+      $("obNext").textContent=obPicked.size?"えらんだ料理ではじめる":"つぎへ";
+    });
+  }
+  body.parentElement.scrollTop=0;$("obBody").scrollTop=0;
+}
+function obFinish(){
+  obPicked.forEach(n=>{
+    const p=PRESET.find(d=>d.name===n);
+    if(p&&!myMenu.some(d=>d.name===n))addPreset(p);
+  });
+  if(obPicked.size){store.set("menu",myMenu)}
+  if(myMenu.length>=8)source="mine";
+  if(source==="mine"){$("srcMine").classList.add("on");$("srcAll").classList.remove("on")}
+  store.set("onboarded",1);
+  refreshAll();
+  $("onboard").classList.add("hidden");
+  goPage("gacha");
+  if(obPicked.size)toast(obPicked.size+"品を登録しました。ガチャをどうぞ！");
+}
+$("obNext").onclick=()=>{if(obStep<2){obStep++;obRender()}else{obFinish()}};
+$("obSkip").onclick=obFinish;
+$("helpBtn").onclick=()=>{obStep=0;obRender();$("onboard").classList.remove("hidden")};
+if(!store.get("onboarded",0)){obStep=0;obRender();$("onboard").classList.remove("hidden")}
+
+/* ============ PWA ============ */
+if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+refreshAll();renderHist();
+</script>
+</body>
+</html>

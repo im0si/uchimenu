@@ -112,7 +112,7 @@
   /* ---------- history ---------- */
   .hist{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}
   .hist:last-child{border-bottom:none}
-  .hist .d{font-size:12px;color:var(--sub);font-weight:700;white-space:nowrap;width:44px}
+  .hist .d{font-size:12px;color:var(--sub);font-weight:700;white-space:nowrap;width:64px}
   .hist .its{flex:1;font-weight:600}
   .hist .kc{font-size:11px;color:var(--sub);white-space:nowrap}
   /* ---------- nav（flexの最下段＝常に見える） ---------- */
@@ -122,9 +122,9 @@
   nav button svg{display:block;margin:0 auto 3px;width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   nav button.on{color:var(--ink)}
   nav button .badge{position:absolute;top:4px;left:50%;margin-left:10px;width:8px;height:8px;border-radius:50%;background:var(--pink)}
-  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(28,28,30,.94);color:#fff;
-    padding:11px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40;white-space:nowrap}
-  .toast.show{opacity:1}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(28,28,30,.94);color:#fff;
+    padding:11px 20px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:40;white-space:nowrap}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   /* ---------- onboarding ---------- */
   #onboard{position:fixed;inset:0;background:#fff;z-index:50;display:flex;flex-direction:column;overflow:hidden}
   #onboard .ob-body{flex:1;overflow-y:auto;padding:20px;max-width:520px;margin:0 auto;width:100%}
@@ -144,6 +144,15 @@
   .dots-ind{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
   .dots-ind i{width:6px;height:6px;border-radius:50%;background:#e3e3e6}
   .dots-ind i.on{background:var(--ink);width:18px;border-radius:3px}
+  /* ---------- motion・アクセシビリティ ---------- */
+  .seg button,.pill,.btn2,nav button,.icbtn,.slot .re{transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
+  .gobtn{transition:transform .15s,box-shadow .2s,opacity .2s}
+  .btn2:active,.pill:active,.slot .re:active{transform:scale(.96)}
+  nav button.on svg{stroke-width:2.3}
+  @keyframes land{0%{transform:scale(.88);opacity:.3}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+  .slot .name.land{animation:land .32s ease-out}
+  :focus-visible{outline:2px solid #f3c6d8;outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
   /* ---------- print ---------- */
   @media print{
     header,nav,.no-print,.oshi-actions,.upsell,#onboard{display:none!important}
@@ -207,7 +216,7 @@
 
   <div class="card">
     <h2>かんたん追加：定番からタップでえらぶ</h2>
-    <div class="quick" id="quickList"></div>
+    <div id="quickList"></div>
   </div>
 
   <div class="card">
@@ -398,7 +407,8 @@ function spinTo(menu){
     const el=$("slotName"+i);
     const iv=setInterval(()=>{el.textContent=pools[i][Math.floor(Math.random()*pools[i].length)].name},65);
     setTimeout(()=>{
-      clearInterval(iv);el.textContent=d.name;el.parentElement.classList.remove("spin");
+      clearInterval(iv);el.textContent=d.name;el.classList.add("land");el.parentElement.classList.remove("spin");
+      if(navigator.vibrate)navigator.vibrate(15);
       if(i===menu.length-1){
         $("goBtn").disabled=false;
         $("resultActions").classList.remove("hidden");
@@ -413,19 +423,23 @@ function reroll(i){
   const others=current.filter((_,j)=>j!==i).map(d=>d.name);
   current[i]=pick(poolOf(current[i].cat),[...others,current[i].name]);
   recent[current[i].name]=Date.now();store.set("recent",recent);
+  resetDecide();
   renderSlots(current,false);
+  $("slotName"+i).classList.add("land");
   $("resultActions").classList.remove("hidden");
 }
 $("goBtn").onclick=()=>{
   current=drawMenu();
   current.forEach(d=>recent[d.name]=Date.now());
   store.set("recent",recent);
+  resetDecide();
   $("resultActions").classList.add("hidden");
   spinTo(current);
 };
 
 /* ============ 決定・記録・共有 ============ */
-function fmtDate(ts){const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()}
+const WDAYS="日月火水木金土";
+function fmtDate(ts){const d=new Date(ts);return (d.getMonth()+1)+"/"+d.getDate()+"("+WDAYS[d.getDay()]+")"}
 function renderHist(){
   const box=$("histList");
   if(!history.length){
@@ -437,11 +451,16 @@ function renderHist(){
   const now=new Date();
   $("statCooked").textContent=history.filter(h=>{const d=new Date(h.ts);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;
 }
+/* 同じ結果の二重記録を防ぐ。ガチャ・引き直しでリセット */
+let decided=false;
+function resetDecide(){decided=false;$("decideBtn").textContent="✓ これに決めた"}
 $("decideBtn").onclick=()=>{
-  if(!current.length)return;
+  if(!current.length||decided)return;
+  decided=true;
   history.push({ts:Date.now(),items:current.map(d=>d.name),kcal:current.reduce((a,d)=>a+d.kcal,0)});
   store.set("hist",history);
   renderHist();
+  $("decideBtn").textContent="✓ きろくしました";
   toast("今夜の献立を「きろく」に残しました");
 };
 $("shareBtn").onclick=async()=>{
@@ -512,6 +531,7 @@ function renderMy(){
           +'<button class="icbtn" data-act="del" aria-label="削除">✕</button>';
         div.querySelector('[data-act=fav]').onclick=()=>{d.fav=!d.fav;store.set("menu",myMenu);refreshAll()};
         div.querySelector('[data-act=del]').onclick=()=>{
+          if(!confirm("「"+d.name+"」をめにゅーから削除しますか？"))return;
           myMenu=myMenu.filter(x=>x.id!==d.id);store.set("menu",myMenu);refreshAll();
         };
         box.appendChild(div);
@@ -526,16 +546,22 @@ function renderMy(){
 }
 function renderQuick(){
   const box=$("quickList");box.innerHTML="";
-  PRESET.slice(0,48).forEach(p=>{
-    const has=myMenu.some(d=>d.name===p.name);
-    const b=document.createElement("button");
-    b.className="pill"+(has?" on":"");b.textContent=(has?"✓ ":"＋ ")+p.name;
-    b.onclick=()=>{
-      if(has){myMenu=myMenu.filter(d=>d.name!==p.name)}
-      else{addPreset(p)}
-      store.set("menu",myMenu);refreshAll();
-    };
-    box.appendChild(b);
+  const catName={"主菜":"主菜（メイン）","副菜":"副菜（もう一品）","汁物":"汁物","主食":"ごはん・パン","一皿":"丼・麺・カレー"};
+  CATS.forEach(cat=>{
+    const lb=document.createElement("div");lb.className="catlabel";lb.textContent=catName[cat];box.appendChild(lb);
+    const row=document.createElement("div");row.className="quick";
+    PRESET.filter(p=>p.cat===cat).forEach(p=>{
+      const has=myMenu.some(d=>d.name===p.name);
+      const b=document.createElement("button");
+      b.className="pill"+(has?" on":"");b.textContent=(has?"✓ ":"＋ ")+p.name;
+      b.onclick=()=>{
+        if(has){myMenu=myMenu.filter(d=>d.name!==p.name)}
+        else{addPreset(p)}
+        store.set("menu",myMenu);refreshAll();
+      };
+      row.appendChild(b);
+    });
+    box.appendChild(row);
   });
 }
 
@@ -621,7 +647,7 @@ $("modeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{
   $("segHint").textContent=SEG_HINTS[mode];
   $("dietRow").classList.toggle("hidden",mode!=="diet");
   $("slots").innerHTML="";$("totalRow").classList.add("hidden");$("resultActions").classList.add("hidden");$("rehint").classList.add("hidden");
-  $("goBtn").textContent="🎲 ガチャをまわす";current=[];
+  $("goBtn").textContent="🎲 ガチャをまわす";current=[];resetDecide();
 });
 [$("srcAll"),$("srcMine")].forEach(b=>b.onclick=()=>{
   $("srcAll").classList.toggle("on",b.dataset.src==="all");

@@ -61,7 +61,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 | おしながき | `#page-oshi` | 「◯◯家のお品書き」和紙風表示（`.paper`）、Canvas での画像保存、印刷/PDF、実物お届けサービスの案内 |
 | きろく | `#page-log` | 「これに決めた」で保存された献立履歴（直近30件） |
 
-このほか、初回起動時のみ表示されるオンボーディング全画面（`#onboard`、3スライド）と、トースト通知（`#toast`）がある。
+このほか、初回起動時のみ表示されるオンボーディング全画面（`#onboard`、3スライド）、トースト通知（`#toast`）、目標カロリー計算のボトムシート（`#profile`、ダイエットモードの「身長・体重から自動計算」ボタンで開く）がある。
 
 ### 主要関数
 
@@ -70,6 +70,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `poolOf(cat)` … カテゴリ別の抽選プール。`source==="mine"` なら自分の登録料理を優先（2品未満なら定番で補完）
 - `drawMenu()` … モード別の献立生成。定食＝主菜/副菜/汁物/主食の4品、一皿＝1品、ダイエット＝「目標-50〜目標kcal」の窓に収まる献立を探索。品数は `dietDishes`（おまかせ/1〜4品）で指定でき、おまかせは品数の多い構成から順に試す（4品→3品→2品→一皿→主菜のみ）。窓に入らなければ目標以下で最も近い献立、それも無理なときは最軽量の組み合わせ＋トースト通知。`pick()` はダイエットモード中ヘルシー料理を優先（×1.6）
 - `renderSlots()` の各スロットには抽選母数（`poolOf(cat).length`＝「◯品から抽選」）を表示する
+- `profCalc()` / `profSync()` … プロフィール（性別・年齢・身長・体重・活動量・減量目標）から目標カロリーを計算。基礎代謝は Mifflin-St Jeor 式、1日消費＝基礎代謝×活動量（1.5/1.75/2.0）、減量は脂肪1kg≒7200kcalで日割り。安全ガードとして減量ペースは月3kg相当（1日720kcal減）まで、1日摂取は女性1200/男性1500kcalを下限に丸める。夕食は1日の35%
 - `renderSlots(menu,spin)` / `spinTo(menu)` / `reroll(i)` … スロット演出の描画、回転アニメーション、1品だけの引き直し
 - `renderHist()` … 履歴一覧と「今月つくった」数の描画
 - `handlePhoto(e)` … 写真を Canvas で最大320pxに縮小し JPEG(0.7) の dataURL 化（localStorage 容量対策）
@@ -94,6 +95,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 | `um_recent` | `recent` | `{料理名: 最終抽選時刻(ms)}` — 抽選の重み付けに使用 |
 | `um_family` | `family` | お品書きの家名（文字列） |
 | `um_onboarded` | — | オンボーディング完了フラグ（1） |
+| `um_profile` | `prof` | 目標カロリー計算用プロフィール `{sex, age, h, w, act, goal, kg, mon}` |
 
 **実行時状態**（保存されない）：`mode`（teishoku/quick/diet）、`source`（all/mine）、`dietDishes`（ダイエットの品数: auto/1〜4）、`current`（現在のガチャ結果）、`decided`（二重記録防止）、`photoData`（登録フォームの写真）、`obStep` / `obPicked`（オンボーディング）。
 

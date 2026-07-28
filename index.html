@@ -145,6 +145,13 @@
   .dots-ind{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
   .dots-ind i{width:6px;height:6px;border-radius:50%;background:#e3e3e6}
   .dots-ind i.on{background:var(--ink);width:18px;border-radius:3px}
+  /* ---------- profile sheet（目標カロリー計算） ---------- */
+  #profile{position:fixed;inset:0;background:rgba(28,28,30,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+  #profile .sheet{background:#fff;border-radius:22px 22px 0 0;max-width:520px;width:100%;max-height:88dvh;overflow-y:auto;
+    padding:18px 18px calc(20px + env(safe-area-inset-bottom))}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;font-size:16px;font-weight:800}
+  .profout{margin-top:16px;background:#f7f7f9;border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.8}
+  .profout b{font-size:17px}
   /* ---------- motion・アクセシビリティ ---------- */
   .seg button,.pill,.btn2,nav button,.icbtn,.slot .re{transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
   .gobtn{transition:transform .15s,box-shadow .2s,opacity .2s}
@@ -195,6 +202,10 @@
         <button class="pill" data-n="3">3品</button>
         <button class="pill" data-n="4">4品</button>
       </span>
+    </div>
+    <div class="rowline hidden" id="dietProfRow">
+      <span>目標がわからない？</span>
+      <button class="pill" id="profBtn">🎯 身長・体重から自動計算</button>
     </div>
     <div class="rowline hidden" id="srcRow">
       <span>ガチャに入る料理</span>
@@ -289,6 +300,31 @@
   <button data-page="log"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>きろく</button>
 </nav>
 <div class="toast" id="toast"></div>
+
+<!-- ================= プロフィール（目標カロリー計算） ================= -->
+<div id="profile" class="hidden">
+  <div class="sheet">
+    <div class="sheet-head"><span>🎯 あなたに合う目標カロリー</span><button class="icbtn" id="profClose" aria-label="閉じる">✕</button></div>
+    <div class="rowline"><span>性別</span><span class="pilltoggle">
+      <button class="pill on" data-sex="f" id="profSexF">女性</button>
+      <button class="pill" data-sex="m" id="profSexM">男性</button></span></div>
+    <div class="rowline"><span>年齢</span><span><input type="number" id="profAge" min="10" max="100"> 歳</span></div>
+    <div class="rowline"><span>身長</span><span><input type="number" id="profH" min="120" max="220"> cm</span></div>
+    <div class="rowline"><span>体重</span><span><input type="number" id="profW" min="30" max="200" step="0.5"> kg</span></div>
+    <div class="rowline"><span>ふだんの活動量</span><span class="pilltoggle" id="profActSeg">
+      <button class="pill" data-act="1.5">低め</button>
+      <button class="pill on" data-act="1.75">ふつう</button>
+      <button class="pill" data-act="2">高め</button></span></div>
+    <div class="rowline"><span>目標</span><span class="pilltoggle" id="profGoalSeg">
+      <button class="pill on" data-goal="keep">健康維持</button>
+      <button class="pill" data-goal="lose">減量したい</button></span></div>
+    <div class="rowline hidden" id="profLoseRow"><span>減らしたい量</span>
+      <span><input type="number" id="profKg" min="1" max="30" style="width:56px"> kg ／ <input type="number" id="profMon" min="1" max="24" style="width:56px"> ヶ月</span></div>
+    <div class="profout" id="profOut"></div>
+    <button class="gobtn" id="profSet" style="margin-top:14px">目標にセット</button>
+    <div class="note">基礎代謝（Mifflin-St Jeor式）×活動量で1日の目安を求め、夕食はその35%として計算しています。あくまで目安であり、医療上のアドバイスではありません。無理のないペース（月3kg以内）をおすすめします。</div>
+  </div>
+</div>
 
 <!-- ================= 初回ガイド ================= -->
 <div id="onboard" class="hidden">
@@ -435,7 +471,17 @@ function drawMenu(){
         if(total<=target&&total>bestTotal){best=combo;bestTotal=total;bestLen=plan.length}
       }
     }
-    if(best){note(bestLen);return best}
+    if(best){
+      if(bestTotal<target-50){
+        /* 窓より下に留まったら、1品だけ差し替えて目標に近づける */
+        for(let i=0;i<best.length;i++){
+          const others=bestTotal-best[i].kcal;
+          const fits=poolOf(best[i].cat).filter(d=>others+d.kcal<=target&&others+d.kcal>=target-50&&!best.some(x=>x.name===d.name));
+          if(fits.length){best[i]=fits[Math.floor(Math.random()*fits.length)];break}
+        }
+      }
+      note(bestLen);return best;
+    }
     for(const plan of plans){
       const pools=plan.map(c=>poolOf(c));
       const minSum=pools.reduce((a,p)=>a+Math.min(...p.map(d=>d.kcal)),0);
@@ -744,6 +790,7 @@ $("modeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{
   $("segHint").textContent=SEG_HINTS[mode];
   $("dietRow").classList.toggle("hidden",mode!=="diet");
   $("dietCountRow").classList.toggle("hidden",mode!=="diet");
+  $("dietProfRow").classList.toggle("hidden",mode!=="diet");
   $("slots").innerHTML="";$("totalRow").classList.add("hidden");$("resultActions").classList.add("hidden");$("rehint").classList.add("hidden");
   $("goBtn").textContent="🎲 ガチャをまわす";current=[];resetDecide();
 });
@@ -759,6 +806,57 @@ $("dietCountSeg").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{
 });
 
 function refreshAll(){renderMy();renderOshi()}
+
+/* ============ プロフィールから目標カロリー計算（保存は um_profile） ============ */
+let prof=Object.assign({sex:"f",age:40,h:160,w:60,act:1.75,goal:"keep",kg:3,mon:3},store.get("profile",{}));
+function profCalc(){
+  /* Mifflin-St Jeor 式で基礎代謝 → 活動量を掛けて1日の消費量 */
+  const bmr=10*prof.w+6.25*prof.h-5*prof.age+(prof.sex==="m"?5:-161);
+  const tdee=bmr*prof.act;
+  let deficit=0,warn="";
+  if(prof.goal==="lose"){
+    /* 脂肪1kg ≒ 7200kcal から1日の削減量を逆算。月3kg相当を上限に */
+    deficit=prof.kg*7200/(prof.mon*30.4);
+    if(deficit>720){deficit=720;warn="そのペースは速すぎるため、健康的な上限（約月3kg）で計算しました"}
+  }
+  const floor=prof.sex==="m"?1500:1200;
+  let daily=tdee-deficit;
+  if(daily<floor){daily=floor;warn="下げすぎは危険なため、1日"+floor+"kcalを下限にしています"}
+  const dinner=Math.max(200,Math.round(daily*0.35/10)*10);
+  return {daily:Math.round(daily),dinner,warn};
+}
+function profOutRender(){
+  const r=profCalc();
+  $("profOut").innerHTML='1日の目安 <b>'+r.daily+'</b> kcal ／ 夕食の目安 <b>'+r.dinner+'</b> kcal'
+    +(r.warn?'<br><span style="color:var(--pink)">'+r.warn+'</span>':'');
+  $("profSet").textContent="夕食 "+r.dinner+" kcal を目標にセット";
+}
+function profSync(){
+  $("profSexF").classList.toggle("on",prof.sex==="f");
+  $("profSexM").classList.toggle("on",prof.sex==="m");
+  $("profAge").value=prof.age;$("profH").value=prof.h;$("profW").value=prof.w;
+  $("profActSeg").querySelectorAll(".pill").forEach(b=>b.classList.toggle("on",parseFloat(b.dataset.act)===prof.act));
+  $("profGoalSeg").querySelectorAll(".pill").forEach(b=>b.classList.toggle("on",b.dataset.goal===prof.goal));
+  $("profLoseRow").classList.toggle("hidden",prof.goal!=="lose");
+  $("profKg").value=prof.kg;$("profMon").value=prof.mon;
+  profOutRender();
+}
+function profSave(){store.set("profile",prof);profSync()}
+[$("profSexF"),$("profSexM")].forEach(b=>b.onclick=()=>{prof.sex=b.dataset.sex;profSave()});
+$("profActSeg").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{prof.act=parseFloat(b.dataset.act);profSave()});
+$("profGoalSeg").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{prof.goal=b.dataset.goal;profSave()});
+[["profAge","age",parseInt],["profH","h",parseFloat],["profW","w",parseFloat],["profKg","kg",parseFloat],["profMon","mon",parseInt]].forEach(([id,key,fn])=>{
+  $(id).oninput=()=>{const v=fn($(id).value);if(v>0){prof[key]=v;store.set("profile",prof);profOutRender()}};
+});
+$("profBtn").onclick=()=>{profSync();$("profile").classList.remove("hidden")};
+$("profClose").onclick=()=>$("profile").classList.add("hidden");
+$("profile").onclick=e=>{if(e.target.id==="profile")$("profile").classList.add("hidden")};
+$("profSet").onclick=()=>{
+  const r=profCalc();
+  $("kcalTarget").value=r.dinner;
+  $("profile").classList.add("hidden");
+  toast("夕食の目標を "+r.dinner+" kcal にしました");
+};
 
 /* ============ 初回ガイド（オンボーディング） ============ */
 let obStep=0;

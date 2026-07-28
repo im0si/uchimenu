@@ -186,7 +186,7 @@
     <div class="seg" id="modeSeg">
       <button class="on" data-mode="teishoku"><span>🍱</span>定食</button>
       <button data-mode="quick"><span>⚡</span>一皿で手軽に</button>
-      <button data-mode="diet"><span>🥗</span>ダイエット</button>
+      <button data-mode="diet"><span>🎯</span>カスタマイズ</button>
     </div>
     <div class="seghint" id="segHint">主菜・副菜・汁物・ごはんの4品が出ます</div>
     <div class="rowline hidden" id="dietRow">
@@ -393,7 +393,9 @@ const PRESET=[
 ["オニオンスープ","汁物",70,15,1],["野菜スープ","汁物",80,15,1],["すまし汁","汁物",20,8,1],
 ["ごはん（小盛り）","主食",160,5,1],["おにぎり","主食",200,10,0],["ロールパン","主食",190,2,0],
 ["フランスパン","主食",180,3,0],["もち麦ごはん","主食",220,5,1],["おかゆ","主食",150,30,1],
-["焼きおにぎり","主食",250,15,0],
+["焼きおにぎり","主食",250,15,0],["ごはん（半膳）","主食",120,5,1],["カリフラワーライス","主食",60,10,1],
+["糖質0麺","主食",30,5,1],["オートミールごはん","主食",150,5,1],["しらたき入りごはん","主食",170,20,1],
+["ブランパン","主食",90,2,1],
 ["焼うどん","一皿",500,15,0],["明太子パスタ","一皿",600,15,0],["和風きのこパスタ","一皿",500,20,1],
 ["中華丼","一皿",600,20,0],["麻婆丼","一皿",650,15,0],["カツ丼","一皿",800,30,0],
 ["天丼","一皿",700,30,0],["三色そぼろ丼","一皿",550,20,0],["しらす丼","一皿",400,5,1],
@@ -450,15 +452,30 @@ function drawMenu(){
     const target=parseInt($("kcalTarget").value)||600;
     /* 品数「おまかせ」なら多い構成から順に、指定があればその品数だけで
        「目標-50〜目標kcal」に収まる組み合わせを探す。窓に入らなければ目標以下で最も近い献立 */
+    /* 2品・3品でも主食は必ず含める（主食+主菜、主食+主菜+副菜） */
     const PLANSETS={
-      auto:[["主菜","副菜","汁物","主食"],["主菜","副菜","汁物"],["主菜","副菜"],["一皿"],["主菜"]],
+      auto:[["主菜","副菜","汁物","主食"],["主菜","副菜","主食"],["主菜","主食"],["一皿"],["主菜"]],
       "4":[["主菜","副菜","汁物","主食"]],
-      "3":[["主菜","副菜","汁物"]],
-      "2":[["主菜","副菜"]],
+      "3":[["主菜","副菜","主食"]],
+      "2":[["主菜","主食"]],
       "1":[["一皿"],["主菜"]]
     };
     const plans=PLANSETS[dietDishes]||PLANSETS.auto;
     const note=n=>{if(dietDishes==="auto"&&n<4)toast("目標"+target+"kcalに合わせて"+n+"品にしました")};
+    /* 合計が窓（目標-50〜目標）より下の献立を、1品ずつ差し替えて目標に近づける */
+    const fitUp=combo=>{
+      let total=combo.reduce((a,d)=>a+d.kcal,0);
+      for(let pass=0;pass<5&&total<target-50;pass++){
+        for(let i=0;i<combo.length;i++){
+          const others=total-combo[i].kcal;
+          const fits=poolOf(combo[i].cat).filter(d=>others+d.kcal<=target&&others+d.kcal>=target-50&&!combo.some(x=>x.name===d.name));
+          if(fits.length){combo[i]=fits[Math.floor(Math.random()*fits.length)];total=others+combo[i].kcal;break}
+          const closer=poolOf(combo[i].cat).filter(d=>others+d.kcal<=target&&others+d.kcal>total&&!combo.some(x=>x.name===d.name));
+          if(closer.length){combo[i]=closer.sort((a,b)=>b.kcal-a.kcal)[0];total=others+combo[i].kcal}
+        }
+      }
+      return combo;
+    };
     let best=null,bestTotal=-1,bestLen=4;
     for(const plan of plans){
       const pools=plan.map(c=>poolOf(c));
@@ -471,22 +488,12 @@ function drawMenu(){
         if(total<=target&&total>bestTotal){best=combo;bestTotal=total;bestLen=plan.length}
       }
     }
-    if(best){
-      if(bestTotal<target-50){
-        /* 窓より下に留まったら、1品だけ差し替えて目標に近づける */
-        for(let i=0;i<best.length;i++){
-          const others=bestTotal-best[i].kcal;
-          const fits=poolOf(best[i].cat).filter(d=>others+d.kcal<=target&&others+d.kcal>=target-50&&!best.some(x=>x.name===d.name));
-          if(fits.length){best[i]=fits[Math.floor(Math.random()*fits.length)];break}
-        }
-      }
-      note(bestLen);return best;
-    }
+    if(best){note(bestLen);return fitUp(best)}
     for(const plan of plans){
       const pools=plan.map(c=>poolOf(c));
       const minSum=pools.reduce((a,p)=>a+Math.min(...p.map(d=>d.kcal)),0);
-      /* 乱択で見つからなくても、各カテゴリ最小kcalの構成なら必ず収まる */
-      if(minSum<=target){note(plan.length);return pools.map(p=>p.slice().sort((a,b)=>a.kcal-b.kcal)[0])}
+      /* 乱択で見つからなくても、各カテゴリ最小kcalの構成なら必ず収まる。そこから窓へ引き上げる */
+      if(minSum<=target){note(plan.length);return fitUp(pools.map(p=>p.slice().sort((a,b)=>a.kcal-b.kcal)[0]))}
     }
     /* この品数では目標内に収まらないときは、最も軽い組み合わせを正直に案内 */
     let lightest=null,lightTotal=Infinity;
@@ -783,7 +790,7 @@ function goPage(page){
   $("main").scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goPage(b.dataset.page));
-const SEG_HINTS={teishoku:"主菜・副菜・汁物・ごはんの4品が出ます",quick:"丼・麺・カレーなど1品だけ。忙しい日はこれ",diet:"目標kcalに収まるよう、品数も自動で調整します"};
+const SEG_HINTS={teishoku:"主菜・副菜・汁物・ごはんの4品が出ます",quick:"丼・麺・カレーなど1品だけ。忙しい日はこれ",diet:"目標kcalと品数を、自分に合わせて設定できます"};
 $("modeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{
   $("modeSeg").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
   mode=b.dataset.mode;
@@ -866,7 +873,7 @@ function obSlide1(){
     +'<img class="icon" src="icon-192.png" alt="">'
     +'<h3>うちめにゅーへようこそ</h3><p>毎日の「今夜なに作ろう…」を、10秒で終わらせるアプリです</p></div>'
     +'<div style="margin-top:10px">'
-    +'<div class="ob-feat"><div class="fi">🎲</div><div><b>献立はガチャで決める</b><span>定食・一皿・ダイエットの3スタイル。ボタンを押すだけで今夜の献立が決まります。</span></div></div>'
+    +'<div class="ob-feat"><div class="fi">🎲</div><div><b>献立はガチャで決める</b><span>定食・一皿・カスタマイズの3スタイル。ボタンを押すだけで今夜の献立が決まります。</span></div></div>'
     +'<div class="ob-feat"><div class="fi">📖</div><div><b>自分のレパートリーを登録</b><span>よく作る料理を登録すると、ガチャが「自分が作れる料理だけ」から選ぶようになります。</span></div></div>'
     +'<div class="ob-feat"><div class="fi">🍽</div><div><b>「お品書き」が自動で完成</b><span>登録した料理で、お店みたいなメニュー表ができます。画像保存や印刷もできます。</span></div></div>'
     +'</div>';

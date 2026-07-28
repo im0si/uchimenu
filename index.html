@@ -183,7 +183,7 @@
     <div class="seghint" id="segHint">主菜・副菜・汁物・ごはんの4品が出ます</div>
     <div class="rowline hidden" id="dietRow">
       <span>夕食の目標カロリー</span>
-      <span><input type="number" id="kcalTarget" value="600" step="50" min="300"> kcal</span>
+      <span><input type="number" id="kcalTarget" value="600" step="50" min="200"> kcal</span>
     </div>
     <div class="rowline hidden" id="srcRow">
       <span>ガチャに入る料理</span>
@@ -348,6 +348,7 @@ function pick(pool,exclude){
     const days=(now-(recent[d.name]||0))/86400000;
     let base=days<1?0.15:days<3?0.5:1;
     if(d.fav)base*=1.4;
+    if(mode==="diet"&&d.healthy)base*=1.6;
     return base;
   });
   let r=Math.random()*w.reduce((a,b)=>a+b,0);
@@ -366,14 +367,28 @@ function drawMenu(){
   if(mode==="quick")return [pick(poolOf("一皿"),[])];
   if(mode==="diet"){
     const target=parseInt($("kcalTarget").value)||600;
-    let best=null;
-    for(let i=0;i<80;i++){
-      const combo=["主菜","副菜","汁物","主食"].map(c=>pick(poolOf(c),[]));
-      const total=combo.reduce((a,d)=>a+d.kcal,0);
-      if(total<=target)return combo;
-      if(!best||total<best.reduce((a,d)=>a+d.kcal,0))best=combo;
+    /* 品数を固定しない：目標内に収まる品数の多い構成から順に試し、無理なら減らす */
+    const plans=[["主菜","副菜","汁物","主食"],["主菜","副菜","汁物"],["主菜","副菜"],["一皿"],["主菜"]];
+    for(const plan of plans){
+      const pools=plan.map(c=>poolOf(c));
+      const minSum=pools.reduce((a,p)=>a+Math.min(...p.map(d=>d.kcal)),0);
+      if(minSum>target)continue;
+      for(let i=0;i<40;i++){
+        const combo=plan.map(c=>pick(poolOf(c),[]));
+        const total=combo.reduce((a,d)=>a+d.kcal,0);
+        if(total<=target){
+          if(plan.length<4)toast("目標"+target+"kcalに合わせて"+plan.length+"品にしました");
+          return combo;
+        }
+      }
+      /* 乱択で見つからなくても、各カテゴリ最小kcalの構成なら必ず収まる */
+      if(plan.length<4)toast("目標"+target+"kcalに合わせて"+plan.length+"品にしました");
+      return pools.map(p=>p.slice().sort((a,b)=>a.kcal-b.kcal)[0]);
     }
-    return best;
+    /* どの品数でも目標内に収まらない極端な目標のときは、最小の献立を正直に案内 */
+    const light=poolOf("主菜").slice().sort((a,b)=>a.kcal-b.kcal)[0];
+    toast("目標"+target+"kcal以内は難しいため、いちばん軽い献立にしました");
+    return [light];
   }
   const ex=[];
   return ["主菜","副菜","汁物","主食"].map(c=>{const d=pick(poolOf(c),ex);ex.push(d.name);return d});
@@ -421,7 +436,22 @@ function spinTo(menu){
 function reroll(i){
   if(!current.length)return;
   const others=current.filter((_,j)=>j!==i).map(d=>d.name);
-  current[i]=pick(poolOf(current[i].cat),[...others,current[i].name]);
+  const pool=poolOf(current[i].cat);
+  let next=pick(pool,[...others,current[i].name]);
+  if(mode==="diet"){
+    /* ダイエット中の引き直しは目標kcalを守れる候補を優先する */
+    const target=parseInt($("kcalTarget").value)||600;
+    const rest=current.reduce((a,d,j)=>j===i?a:a+d.kcal,0);
+    if(rest+next.kcal>target){
+      const fit=pool.filter(d=>d.name!==current[i].name&&!others.includes(d.name)&&rest+d.kcal<=target);
+      if(fit.length){next=fit[Math.floor(Math.random()*fit.length)]}
+      else{
+        next=pool.filter(d=>d.name!==current[i].name).sort((a,b)=>a.kcal-b.kcal)[0]||next;
+        toast("収まる候補がないため、いちばん軽い料理にしました");
+      }
+    }
+  }
+  current[i]=next;
   recent[current[i].name]=Date.now();store.set("recent",recent);
   resetDecide();
   renderSlots(current,false);
@@ -640,7 +670,7 @@ function goPage(page){
   $("main").scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goPage(b.dataset.page));
-const SEG_HINTS={teishoku:"主菜・副菜・汁物・ごはんの4品が出ます",quick:"丼・麺・カレーなど1品だけ。忙しい日はこれ",diet:"目標カロリー内におさまる組み合わせが出ます"};
+const SEG_HINTS={teishoku:"主菜・副菜・汁物・ごはんの4品が出ます",quick:"丼・麺・カレーなど1品だけ。忙しい日はこれ",diet:"目標kcalに収まるよう、品数も自動で調整します"};
 $("modeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{
   $("modeSeg").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
   mode=b.dataset.mode;

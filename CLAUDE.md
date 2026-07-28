@@ -68,7 +68,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `store.get(k,def)` / `store.set(k,v)` … localStorage ラッパー。例外時は `mem` にフォールバック
 - `pick(pool,exclude)` … 重み付き抽選。直近に出た料理（`recent`）は出にくく（1日以内×0.15、3日以内×0.5）、お気に入りは出やすく（×1.4）
 - `poolOf(cat)` … カテゴリ別の抽選プール。`source==="mine"` なら自分の登録料理を優先（2品未満なら定番で補完）
-- `drawMenu()` … モード別の献立生成。定食＝主菜/副菜/汁物/主食の4品、一皿＝1品、ダイエット＝目標kcal以内の組み合わせを最大80回試行
+- `drawMenu()` … モード別の献立生成。定食＝主菜/副菜/汁物/主食の4品、一皿＝1品、ダイエット＝目標kcalに収まるよう品数を自動調整（4品→3品→2品→一皿→主菜のみ、の順に試行。最後は各カテゴリ最小kcal構成で必ず収め、どの品数でも無理な低目標時は最軽量の1品＋トースト通知）
 - `renderSlots(menu,spin)` / `spinTo(menu)` / `reroll(i)` … スロット演出の描画、回転アニメーション、1品だけの引き直し
 - `renderHist()` … 履歴一覧と「今月つくった」数の描画
 - `handlePhoto(e)` … 写真を Canvas で最大320pxに縮小し JPEG(0.7) の dataURL 化（localStorage 容量対策）

@@ -47,6 +47,7 @@
   .pilltoggle{display:flex;gap:6px}
   .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600;color:var(--sub)}
   .pill.on{border-color:var(--pink);color:var(--pink);background:#fdf1f6}
+  #dietCountSeg .pill{padding:7px 8px;font-size:11px}
   input[type=number]{width:78px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;font-size:14px;text-align:right;background:#fff}
   select,input[type=text]{padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:15px;background:#fff;width:100%;color:var(--ink);appearance:none}
   input:focus,select:focus{outline:2px solid #f3c6d8;border-color:var(--pink)}
@@ -184,6 +185,16 @@
     <div class="rowline hidden" id="dietRow">
       <span>夕食の目標カロリー</span>
       <span><input type="number" id="kcalTarget" value="600" step="50" min="200"> kcal</span>
+    </div>
+    <div class="rowline hidden" id="dietCountRow">
+      <span>品数</span>
+      <span class="pilltoggle" id="dietCountSeg">
+        <button class="pill on" data-n="auto">おまかせ</button>
+        <button class="pill" data-n="1">1品</button>
+        <button class="pill" data-n="2">2品</button>
+        <button class="pill" data-n="3">3品</button>
+        <button class="pill" data-n="4">4品</button>
+      </span>
     </div>
     <div class="rowline hidden" id="srcRow">
       <span>ガチャに入る料理</span>
@@ -371,7 +382,7 @@ let family=store.get("family","");
 
 const $=id=>document.getElementById(id);
 const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2000)};
-let mode="teishoku",source="all",current=[];
+let mode="teishoku",source="all",current=[],dietDishes="auto";
 
 /* ============ 抽選ロジック（最近出た料理は出にくい重み付き） ============ */
 function pick(pool,exclude){
@@ -401,10 +412,17 @@ function drawMenu(){
   if(mode==="quick")return [pick(poolOf("一皿"),[])];
   if(mode==="diet"){
     const target=parseInt($("kcalTarget").value)||600;
-    /* 品数を固定しない：品数の多い構成から順に「目標-50〜目標kcal」に収まる組み合わせを探し、
-       見つからなければ品数を減らす。どの品数でも窓に入らなければ目標以下で最も近い献立を出す */
-    const plans=[["主菜","副菜","汁物","主食"],["主菜","副菜","汁物"],["主菜","副菜"],["一皿"],["主菜"]];
-    const note=n=>{if(n<4)toast("目標"+target+"kcalに合わせて"+n+"品にしました")};
+    /* 品数「おまかせ」なら多い構成から順に、指定があればその品数だけで
+       「目標-50〜目標kcal」に収まる組み合わせを探す。窓に入らなければ目標以下で最も近い献立 */
+    const PLANSETS={
+      auto:[["主菜","副菜","汁物","主食"],["主菜","副菜","汁物"],["主菜","副菜"],["一皿"],["主菜"]],
+      "4":[["主菜","副菜","汁物","主食"]],
+      "3":[["主菜","副菜","汁物"]],
+      "2":[["主菜","副菜"]],
+      "1":[["一皿"],["主菜"]]
+    };
+    const plans=PLANSETS[dietDishes]||PLANSETS.auto;
+    const note=n=>{if(dietDishes==="auto"&&n<4)toast("目標"+target+"kcalに合わせて"+n+"品にしました")};
     let best=null,bestTotal=-1,bestLen=4;
     for(const plan of plans){
       const pools=plan.map(c=>poolOf(c));
@@ -424,10 +442,15 @@ function drawMenu(){
       /* 乱択で見つからなくても、各カテゴリ最小kcalの構成なら必ず収まる */
       if(minSum<=target){note(plan.length);return pools.map(p=>p.slice().sort((a,b)=>a.kcal-b.kcal)[0])}
     }
-    /* どの品数でも目標内に収まらない極端な目標のときは、最小の献立を正直に案内 */
-    const light=poolOf("主菜").slice().sort((a,b)=>a.kcal-b.kcal)[0];
-    toast("目標"+target+"kcal以内は難しいため、いちばん軽い献立にしました");
-    return [light];
+    /* この品数では目標内に収まらないときは、最も軽い組み合わせを正直に案内 */
+    let lightest=null,lightTotal=Infinity;
+    for(const plan of plans){
+      const combo=plan.map(c=>poolOf(c).slice().sort((a,b)=>a.kcal-b.kcal)[0]);
+      const t=combo.reduce((a,d)=>a+d.kcal,0);
+      if(t<lightTotal){lightTotal=t;lightest=combo}
+    }
+    toast("目標"+target+"kcal以内は難しいため、いちばん軽い組み合わせにしました");
+    return lightest;
   }
   const ex=[];
   return ["主菜","副菜","汁物","主食"].map(c=>{const d=pick(poolOf(c),ex);ex.push(d.name);return d});
@@ -441,7 +464,7 @@ function renderSlots(menu,spin){
     div.className="slot"+(spin?" spin":"");
     div.innerHTML='<span class="cat c'+d.cat+'">'+d.cat+'</span>'
       +'<span class="name" id="slotName'+i+'">'+(spin?"…":d.name)+'</span>'
-      +'<span class="meta">'+d.kcal+'kcal<br>約'+d.min+'分</span>'
+      +'<span class="meta">'+d.kcal+'kcal・約'+d.min+'分<br>'+poolOf(d.cat).length+'品から抽選</span>'
       +'<button class="re" data-i="'+i+'" aria-label="この料理だけ引き直す">↺</button>';
     box.appendChild(div);
   });
@@ -720,8 +743,13 @@ $("modeSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{
   mode=b.dataset.mode;
   $("segHint").textContent=SEG_HINTS[mode];
   $("dietRow").classList.toggle("hidden",mode!=="diet");
+  $("dietCountRow").classList.toggle("hidden",mode!=="diet");
   $("slots").innerHTML="";$("totalRow").classList.add("hidden");$("resultActions").classList.add("hidden");$("rehint").classList.add("hidden");
   $("goBtn").textContent="🎲 ガチャをまわす";current=[];resetDecide();
+});
+$("dietCountSeg").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{
+  $("dietCountSeg").querySelectorAll(".pill").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");dietDishes=b.dataset.n;
 });
 [$("srcAll"),$("srcMine")].forEach(b=>b.onclick=()=>{
   $("srcAll").classList.toggle("on",b.dataset.src==="all");

@@ -68,7 +68,8 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `store.get(k,def)` / `store.set(k,v)` … localStorage ラッパー。例外時は `mem` にフォールバック
 - `pick(pool,exclude)` … 重み付き抽選。直近に出た料理（`recent`）は出にくく（1日以内×0.15、3日以内×0.5）、お気に入りは出やすく（×1.4）
 - `poolOf(cat)` … カテゴリ別の抽選プール。`source==="mine"` なら自分の登録料理を優先（2品未満なら定番で補完）
-- `drawMenu()` … モード別の献立生成。定食＝主菜/副菜/汁物/主食の4品、一皿＝1品、ダイエット＝「目標-50〜目標kcal」の窓に収まる献立を品数の多い構成から順に探索（4品→3品→2品→一皿→主菜のみ）。窓に入らなければ目標以下で最も近い献立、それも無理な低目標時は最軽量の1品＋トースト通知。`pick()` はダイエットモード中ヘルシー料理を優先（×1.6）
+- `drawMenu()` … モード別の献立生成。定食＝主菜/副菜/汁物/主食の4品、一皿＝1品、ダイエット＝「目標-50〜目標kcal」の窓に収まる献立を探索。品数は `dietDishes`（おまかせ/1〜4品）で指定でき、おまかせは品数の多い構成から順に試す（4品→3品→2品→一皿→主菜のみ）。窓に入らなければ目標以下で最も近い献立、それも無理なときは最軽量の組み合わせ＋トースト通知。`pick()` はダイエットモード中ヘルシー料理を優先（×1.6）
+- `renderSlots()` の各スロットには抽選母数（`poolOf(cat).length`＝「◯品から抽選」）を表示する
 - `renderSlots(menu,spin)` / `spinTo(menu)` / `reroll(i)` … スロット演出の描画、回転アニメーション、1品だけの引き直し
 - `renderHist()` … 履歴一覧と「今月つくった」数の描画
 - `handlePhoto(e)` … 写真を Canvas で最大320pxに縮小し JPEG(0.7) の dataURL 化（localStorage 容量対策）
@@ -94,7 +95,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 | `um_family` | `family` | お品書きの家名（文字列） |
 | `um_onboarded` | — | オンボーディング完了フラグ（1） |
 
-**実行時状態**（保存されない）：`mode`（teishoku/quick/diet）、`source`（all/mine）、`current`（現在のガチャ結果）、`photoData`（登録フォームの写真）、`obStep` / `obPicked`（オンボーディング）。
+**実行時状態**（保存されない）：`mode`（teishoku/quick/diet）、`source`（all/mine）、`dietDishes`（ダイエットの品数: auto/1〜4）、`current`（現在のガチャ結果）、`decided`（二重記録防止）、`photoData`（登録フォームの写真）、`obStep` / `obPicked`（オンボーディング）。
 
 ### PWA
 

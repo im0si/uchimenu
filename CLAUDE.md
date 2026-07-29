@@ -102,6 +102,13 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 
 **実行時状態**（保存されない）：`mode`（teishoku/quick/diet=カスタマイズ）、`source`（all/mine）、`dietDishes`（ダイエットの品数: auto/1〜4）、`current`（現在のガチャ結果）、`decided`（二重記録防止）、`photoData`（登録フォームの写真）、`obStep` / `obPicked`（オンボーディング）。
 
+### ディープリンク（SEO記事などからの導線）
+
+URLパラメータでアプリの初期状態を指定できる（外部通信なし・パース処理のみ）。
+`?mode=diet|teishoku|quick&kcal=200..2000&dishes=auto|1..4&page=gacha|lunch|menu|oshi|log`
+例: `./?mode=diet&kcal=600&dishes=3` … 記事のCTAから目標セット済みガチャへ直行。
+mode か kcal 付きの訪問では初回オンボーディングを抑制する（完了フラグは立てない）。
+
 ### PWA
 
 - `sw.js` を相対パスで登録（`http(s)` プロトコル時のみ）。キャッシュ名 `uchimenu-v1`、ネット優先・失敗時キャッシュ戦略。

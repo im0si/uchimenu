@@ -1097,6 +1097,20 @@ $("obSkip").onclick=obFinish;
 $("helpBtn").onclick=()=>{obStep=0;obRender();$("onboard").classList.remove("hidden")};
 if(!store.get("onboarded",0)){obStep=0;obRender();$("onboard").classList.remove("hidden")}
 
+/* ============ ディープリンク（SEO記事などからの導線） ============ */
+/* 例: ?mode=diet&kcal=600&dishes=3 … 記事のCTAから目標セット済みガチャへ直行できる */
+(function(){
+  const q=new URLSearchParams(location.search);
+  const m={teishoku:"teishoku",quick:"quick",diet:"diet",custom:"diet"}[q.get("mode")];
+  if(m){const b=$("modeSeg").querySelector('[data-mode="'+m+'"]');if(b)b.click()}
+  const kv=parseInt(q.get("kcal"));
+  if(kv>=200&&kv<=2000)$("kcalTarget").value=kv;
+  if(q.get("dishes")){const b=$("dietCountSeg").querySelector('[data-n="'+q.get("dishes")+'"]');if(b)b.click()}
+  if(q.get("page")&&["gacha","lunch","menu","oshi","log"].includes(q.get("page")))goPage(q.get("page"));
+  /* 記事から目的を持って来た人には初回ガイドを出さない（完了フラグは立てず、次回の通常訪問では表示） */
+  if(m||kv)$("onboard").classList.add("hidden");
+})();
+
 /* ============ PWA ============ */
 if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
   navigator.serviceWorker.register("sw.js").catch(()=>{});

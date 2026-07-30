@@ -35,17 +35,21 @@ jobs:
           mkdir out
           cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png apple-touch-icon.png out/
 
-      - name: Upload via FTPS
+      - name: Upload via FTPS (lftp, 3 retries)
         if: steps.check.outputs.configured == 'true'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.XSERVER_FTP_HOST }}
-          username: ${{ secrets.XSERVER_FTP_USER }}
-          password: ${{ secrets.XSERVER_FTP_PASSWORD }}
-          protocol: ftps
-          local-dir: out/
-          # サブドメインのドキュメントルートはフルネーム形式のフォルダ
-          server-dir: /run-digital.com/public_html/uchimenu.run-digital.com/app/
+        env:
+          H: ${{ secrets.XSERVER_FTP_HOST }}
+          U: ${{ secrets.XSERVER_FTP_USER }}
+          P: ${{ secrets.XSERVER_FTP_PASSWORD }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          for i in 1 2 3; do
+            if lftp -u "$U","$P" -e "set ftp:ssl-force true; set net:timeout 20; set net:max-retries 2;               mirror -R --verbose out/ /run-digital.com/public_html/uchimenu.run-digital.com/app/; bye" "$H"; then
+              echo "upload ok"; exit 0
+            fi
+            echo "attempt $i failed, waiting..."; sleep 20
+          done
+          echo "upload failed after 3 attempts"; exit 1
 
       - name: Skip note
         if: steps.check.outputs.configured != 'true'

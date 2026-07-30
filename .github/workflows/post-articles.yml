@@ -1,7 +1,8 @@
 name: Post articles to WordPress
 
 # 手動実行専用。articles/*.html を WordPress へ「下書き」として投稿する。
-# 同じスラッグの記事が既にあればスキップ（二重投稿しない）。
+# 同じスラッグが既にある場合: 下書きなら内容を更新、公開済みならスキップ
+#（公開後にWP側で加えた修正を上書きしないため）。
 # 必要な Secrets: WP_APP_USER（WPユーザー名）/ WP_APP_PASS（アプリケーションパスワード）
 
 on: workflow_dispatch
@@ -43,26 +44,31 @@ jobs:
                       return c["id"]
               return api("POST", "/categories", {"name": name})["id"]
 
-          posted = skipped = 0
+          posted = updated = skipped = 0
           for f in sorted(glob.glob("articles/*.html")):
               raw = open(f, encoding="utf-8").read()
               m = re.match(r"<!--meta\s+(\{.*?\})\s*-->\s*(.*)", raw, re.S)
               if not m:
                   print(f"SKIP(no meta): {f}"); continue
               meta = json.loads(m.group(1))
-              content = m.group(2)
-              existing = api("GET", "/posts?status=any&slug=" + meta["slug"])
-              if existing:
-                  print(f"SKIP(exists): {meta['slug']}"); skipped += 1; continue
-              post = api("POST", "/posts", {
+              payload = {
                   "title":      meta["title"],
                   "slug":       meta["slug"],
-                  "status":     "draft",
-                  "content":    content,
+                  "content":    m.group(2),
                   "excerpt":    meta.get("excerpt", ""),
                   "categories": [category_id(meta["category"])],
-              })
+              }
+              existing = api("GET", "/posts?status=any&slug=" + meta["slug"])
+              if existing:
+                  if existing[0]["status"] == "draft":
+                      api("POST", f"/posts/{existing[0]['id']}", payload)
+                      print(f"UPDATED(draft): {meta['slug']}"); updated += 1
+                  else:
+                      print(f"SKIP(published): {meta['slug']}"); skipped += 1
+                  continue
+              payload["status"] = "draft"
+              post = api("POST", "/posts", payload)
               print(f"POSTED(draft): {meta['slug']} -> id {post['id']}"); posted += 1
 
-          print(f"done: posted {posted}, skipped {skipped}")
+          print(f"done: posted {posted}, updated {updated}, skipped {skipped}")
           EOF

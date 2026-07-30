@@ -38,11 +38,12 @@ function uchimenu_app_url( $args = array() ) {
 /** カテゴリ名 → 色クラス */
 function uchimenu_cat_class( $name ) {
 	$map = array(
-		'献立のヒント'   => 'g-shu',
-		'ダイエット'     => 'g-matcha',
-		'コンビニ・外食' => 'g-ai',
-		'料理とカロリー' => 'g-yama',
-		'レシピ'         => 'g-sakura',
+		// SEO戦略書（articles/STRATEGY.md）のカテゴリ設計に対応
+		'献立の決め方'         => 'g-shu',
+		'カロリー別 夕食献立'  => 'g-matcha',
+		'食べすぎリカバリー'   => 'g-ai',
+		'1週間の献立と買い物'  => 'g-yama',
+		'うちめにゅーの使い方' => 'g-sakura',
 	);
 	if ( isset( $map[ $name ] ) ) return $map[ $name ];
 	$pool = array( 'g-shu', 'g-ai', 'g-matcha', 'g-yama', 'g-sakura' );

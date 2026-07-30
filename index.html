@@ -320,6 +320,16 @@
   </div>
 
   <div class="card">
+    <h2>にがて・除外したい食材</h2>
+    <div class="note" style="margin-top:0">登録した言葉を含む料理・材料はガチャに出なくなります（例: なす、パクチー、さば）</div>
+    <div class="formrow" style="margin:10px 0 4px">
+      <input type="text" id="ngIn" placeholder="食材や料理名を入力">
+      <button class="btn2 fill" style="width:96px;flex:none" id="ngBtn">追加</button>
+    </div>
+    <div class="quick" id="ngListBox"></div>
+  </div>
+
+  <div class="card">
     <details id="formBox">
       <summary>リストにない料理を自分で登録する</summary>
       <div style="margin-top:12px">
@@ -387,6 +397,14 @@
   <button data-page="log"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>きろく</button>
 </nav>
 <div class="toast" id="toast"></div>
+
+<!-- ホーム画面追加の促し（2回目以降の訪問で表示・閉じたら二度と出ない） -->
+<div id="pwaBn" class="hidden" style="position:fixed;left:12px;right:12px;bottom:78px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:12.5px;max-width:496px;margin:0 auto">
+  <span style="font-size:22px">🍚</span>
+  <span style="flex:1;line-height:1.5" id="pwaMsg">ホーム画面に追加すると、毎日ワンタップで開けます</span>
+  <button class="btn2 fill" id="pwaGo" style="flex:none;padding:9px 14px;font-size:12px">追加</button>
+  <button class="icbtn" id="pwaNo" aria-label="閉じる">✕</button>
+</div>
 
 <!-- ================= 買い物リスト（ボトムシート） ================= -->
 <div id="shop" class="sheetwrap hidden">
@@ -535,13 +553,21 @@ function pick(pool,exclude){
   for(let i=0;i<list.length;i++){r-=w[i];if(r<=0)return list[i]}
   return list[list.length-1];
 }
+let ngList=store.get("ng",[]);
+function isNG(d){
+  return ngList.some(w=>d.name.includes(w)||(typeof ING!=="undefined"&&(ING[d.name]||[]).some(g=>g.includes(w))));
+}
 function poolOf(cat){
+  let pool;
   if(source==="mine"){
     const mine=myMenu.filter(d=>d.cat===cat);
-    if(mine.length>=2)return mine;
-    return [...mine,...PRESET.filter(d=>d.cat===cat)];
+    pool=mine.length>=2?mine:[...mine,...PRESET.filter(d=>d.cat===cat)];
+  }else{
+    pool=PRESET.filter(d=>d.cat===cat);
   }
-  return PRESET.filter(d=>d.cat===cat);
+  /* 除外設定を適用。絞りすぎてプールが空になるときは除外を無視して動作を守る */
+  const filtered=pool.filter(d=>!isNG(d));
+  return filtered.length?filtered:pool;
 }
 function drawMenu(){
   if(mode==="quick")return [pick(poolOf("一皿"),[])];
@@ -693,7 +719,13 @@ function renderHist(){
     box.innerHTML='<div class="emptybox"><div class="big">📅</div>まだ記録がありません。<br>ガチャで「✓ これに決めた」を押すと<br>ここに献立が残っていきます。</div>';
   }else{
     box.innerHTML=history.slice(-30).reverse().map(h=>
-      '<div class="hist"><span class="d">'+fmtDate(h.ts)+'</span><span class="its">'+h.items.join("・")+'</span><span class="kc">'+h.kcal+'kcal</span></div>').join("");
+      '<div class="hist" data-ts="'+h.ts+'"><span class="d">'+fmtDate(h.ts)+'</span><span class="its">'+h.items.join("・")+'</span><span class="kc">'+h.kcal+'kcal</span>'
+      +'<button class="icbtn" data-act="del" aria-label="この記録を削除">✕</button></div>').join("");
+    box.querySelectorAll('[data-act=del]').forEach(b=>b.onclick=()=>{
+      const row=b.closest(".hist"),ts=Number(row.dataset.ts);
+      if(!confirm("この日の記録を削除しますか？"))return;
+      history=history.filter(h=>h.ts!==ts);store.set("hist",history);renderHist();
+    });
   }
   const now=new Date();
   $("statCooked").textContent=history.filter(h=>{const d=new Date(h.ts);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;
@@ -805,6 +837,25 @@ $("addBtn").onclick=()=>{
   setPhotoLabel("📷 写真を追加（あとからでもOK）");
   refreshAll();
   toast("「"+name+"」を追加しました");
+};
+/* 苦手・除外リスト */
+function renderNg(){
+  const box=$("ngListBox");box.innerHTML="";
+  if(!ngList.length){box.innerHTML='<span class="note" style="margin-top:0">まだ登録がありません</span>';return}
+  ngList.forEach(w=>{
+    const b=document.createElement("button");
+    b.className="pill on";b.textContent="✕ "+w;
+    b.onclick=()=>{ngList=ngList.filter(x=>x!==w);store.set("ng",ngList);renderNg()};
+    box.appendChild(b);
+  });
+}
+$("ngBtn").onclick=()=>{
+  const w=$("ngIn").value.trim();
+  if(!w){toast("食材や料理名を入力してください");return}
+  if(w.length>12){toast("12文字以内で入力してください");return}
+  if(!ngList.includes(w)){ngList.push(w);store.set("ng",ngList)}
+  $("ngIn").value="";renderNg();
+  toast("「"+w+"」を含む料理はガチャに出なくなります");
 };
 function addPreset(p){
   myMenu.push({id:"m"+Date.now()+Math.random().toString(36).slice(2,6),name:p.name,cat:p.cat,kcal:p.kcal,min:p.min,photo:null,fav:false});
@@ -1046,7 +1097,8 @@ function renderLunch(){
   let streak=0;const d=new Date();
   if(!days.has(dkey(d.getTime())))d.setDate(d.getDate()-1);
   while(days.has(dkey(d.getTime()))){streak++;d.setDate(d.getDate()-1)}
-  $("lunchStreak").textContent=streak;
+  const badge=streak>=100?"👑":streak>=30?"🏆":streak>=14?"⭐":streak>=7?"🔥":streak>=3?"🌱":"";
+  $("lunchStreak").textContent=streak+(badge?" "+badge:"");
   /* 夕食予算カード */
   const bc=$("lunchBudgetCard");
   if(store.get("profile",null)){
@@ -1343,7 +1395,7 @@ function renderWeight(){
 }
 
 /* ============ バックアップ・復元 ============ */
-const BK_KEYS=["menu","hist","recent","family","onboarded","profile","lunchlog","week","shop","weight"];
+const BK_KEYS=["menu","hist","recent","family","onboarded","profile","lunchlog","week","shop","weight","ng"];
 $("expBtn").onclick=()=>{
   const data={app:"uchimenu",ver:1,ts:Date.now()};
   BK_KEYS.forEach(k=>{const v=store.get(k,null);if(v!==null)data[k]=v});
@@ -1460,8 +1512,29 @@ if(!store.get("onboarded",0)){obStep=0;obRender();$("onboard").classList.remove(
 if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
+/* ホーム画面追加の促し: 2回目以降の訪問・未インストール時のみ。閉じたら出さない */
+const visits=(store.get("visits",0)||0)+1;store.set("visits",visits);
+const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+let bipEvent=null;
+function showPwaBn(msg){
+  if(store.get("pwahide",0)||standalone||visits<2||!store.get("onboarded",0))return;
+  if(msg)$("pwaMsg").textContent=msg;
+  $("pwaBn").classList.remove("hidden");
+}
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();bipEvent=e;showPwaBn();
+});
+if(/iphone|ipad/i.test(navigator.userAgent)&&!standalone){
+  $("pwaGo").classList.add("hidden");
+  showPwaBn("共有ボタン→「ホーム画面に追加」で、毎日ワンタップで開けます");
+}
+$("pwaGo").onclick=async()=>{
+  if(bipEvent){bipEvent.prompt();await bipEvent.userChoice;bipEvent=null}
+  $("pwaBn").classList.add("hidden");store.set("pwahide",1);
+};
+$("pwaNo").onclick=()=>{$("pwaBn").classList.add("hidden");store.set("pwahide",1)};
 
-refreshAll();renderHist();renderWeek();renderWeight();
+refreshAll();renderHist();renderWeek();renderWeight();renderNg();
 </script>
 </body>
 </html>

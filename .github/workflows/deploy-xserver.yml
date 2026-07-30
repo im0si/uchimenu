@@ -1,0 +1,51 @@
+name: Deploy app to Xserver
+
+# main にアプリのファイルが push されたら、エックスサーバーの /app/ へ自動転送する。
+# 接続情報は GitHub Secrets（XSERVER_FTP_HOST / XSERVER_FTP_USER /
+# XSERVER_FTP_PASSWORD / XSERVER_REMOTE_DIR）に登録する。
+# Secrets が未登録のあいだは何もせず正常終了する。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - sw.js
+      - manifest.webmanifest
+      - icon-192.png
+      - icon-512.png
+      - apple-touch-icon.png
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check FTP secrets
+        id: check
+        env:
+          HOST: ${{ secrets.XSERVER_FTP_HOST }}
+        run: echo "configured=$([ -n "$HOST" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Stage app files
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          mkdir out
+          cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png apple-touch-icon.png out/
+
+      - name: Upload via FTPS
+        if: steps.check.outputs.configured == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.XSERVER_FTP_HOST }}
+          username: ${{ secrets.XSERVER_FTP_USER }}
+          password: ${{ secrets.XSERVER_FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: out/
+          server-dir: ${{ secrets.XSERVER_REMOTE_DIR }}
+
+      - name: Skip note
+        if: steps.check.outputs.configured != 'true'
+        run: echo "FTP secrets are not set yet - skipping deploy."

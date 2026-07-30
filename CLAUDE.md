@@ -11,6 +11,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `sw.js` … Service Worker（オフラインキャッシュ、ネット優先・失敗時キャッシュ）
 - `manifest.webmanifest` … PWA マニフェスト（`start_url` / `scope` は `./`）
 - `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類
+- `.github/workflows/deploy-xserver.yml` … main への push 時、アプリ6ファイルをエックスサーバー（WPサイトの `/app/`）へFTPS自動転送。接続情報は GitHub Secrets（`XSERVER_FTP_HOST` / `XSERVER_FTP_USER` / `XSERVER_FTP_PASSWORD` / `XSERVER_REMOTE_DIR`）。未設定時は何もしない
 
 ビルド工程・パッケージマネージャ・テストは存在しない。ブラウザで `index.html` を開けば動く。
 

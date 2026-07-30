@@ -1,0 +1,31 @@
+name: Check Xserver directories
+
+# 手動実行専用の調査ワークフロー。FTPS でサーバーのフォルダ構成を一覧して
+# アプリの設置場所を確認する（ファイルの変更は一切しない）。
+
+on: workflow_dispatch
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List candidate directories
+        env:
+          H: ${{ secrets.XSERVER_FTP_HOST }}
+          U: ${{ secrets.XSERVER_FTP_USER }}
+          P: ${{ secrets.XSERVER_FTP_PASSWORD }}
+        run: |
+          list() {
+            echo "===== $1"
+            curl -sS --ssl-reqd -u "$U:$P" "ftp://$H$1" || echo "(cannot list)"
+            echo
+          }
+          list "/"
+          list "/run-digital.com/"
+          list "/run-digital.com/public_html/"
+          list "/run-digital.com/public_html/uchimenu/"
+          list "/run-digital.com/public_html/uchimenu/app/"
+          list "/run-digital.com/public_html/app/"
+          list "/uchimenu.run-digital.com/"
+          list "/uchimenu.run-digital.com/public_html/"
+          list "/app/"

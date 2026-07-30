@@ -46,11 +46,12 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - localStorage が使えない環境（プライベートモード等）では `mem` オブジェクトへのメモリ内フォールバックで動作を継続する。この仕組みを壊さない。
 - `localStorage` を直接呼ぶコードを新規に書かない。
 
-### 5. デザインのトーンを守る
-- 白基調：背景 `#fafafa`（`--bg`）、カードは白。
+### 5. デザインのトーンを守る（WPテーマ「和モダンポップ」と統一）
+- 和紙基調：背景 `#f6f1e6`（`--bg`、data URI の SVG ノイズテクスチャ付き）、カードは生成り `#fffdf9`（`--card`）。文字色は墨 `#2b2620`（`--ink`）。
 - 角丸は 18px（`--r`）を基本とする。
-- アクセントの Instagram風グラデーション `linear-gradient(45deg,#833ab4,#fd1d1d,#fcb045)`（`--grad`）は**ロゴとメインボタン（ガチャボタン等の `.gobtn`、統計数字などのごく一部）にのみ**使用する。乱用しない。
-- 既存の CSS 変数（`--bg` `--card` `--ink` `--sub` `--line` `--pink` `--grad` `--shadow` `--r`）を使う。
+- アクセントの朱→山吹グラデーション `linear-gradient(45deg,#bf4433,#d9982f)`（`--grad`）は**ロゴとメインボタン（ガチャボタン等の `.gobtn`、統計数字などのごく一部）にのみ**使用する。乱用しない。
+- カテゴリ色は 主菜=朱 `--shu` ／副菜=抹茶 `--matcha` ／汁物=藍 `--ai` ／主食=山吹 `--yama` ／一皿=桜 `--sakura`。Canvas（共有カード）内の `CATC` も同じ値に揃える。
+- 既存の CSS 変数（`--bg` `--card` `--ink` `--sub` `--line` `--pink`(朱の別名) `--shu` `--yama` `--matcha` `--ai` `--sakura` `--grad` `--shadow` `--r`）を使う。色を追加するときは wp-theme/uchimenu/style.css のパレットから選ぶ。
 
 ### 6. 日本語フォントはシステムフォント
 - `-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif` を維持する。

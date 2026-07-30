@@ -146,13 +146,33 @@
   .dots-ind{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
   .dots-ind i{width:6px;height:6px;border-radius:50%;background:#e3e3e6}
   .dots-ind i.on{background:var(--ink);width:18px;border-radius:3px}
-  /* ---------- profile sheet（目標カロリー計算） ---------- */
-  #profile{position:fixed;inset:0;background:rgba(28,28,30,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
-  #profile .sheet{background:#fff;border-radius:22px 22px 0 0;max-width:520px;width:100%;max-height:88dvh;overflow-y:auto;
+  /* ---------- bottom sheet（プロフィール・買い物リスト共通） ---------- */
+  .sheetwrap{position:fixed;inset:0;background:rgba(28,28,30,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+  .sheetwrap .sheet{background:#fff;border-radius:22px 22px 0 0;max-width:520px;width:100%;max-height:88dvh;overflow-y:auto;
     padding:18px 18px calc(20px + env(safe-area-inset-bottom))}
   .sheet-head{display:flex;align-items:center;justify-content:space-between;font-size:16px;font-weight:800}
   .profout{margin-top:16px;background:#f7f7f9;border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.8}
   .profout b{font-size:17px}
+  /* ---------- 週間ガチャ・買い物リスト・体重 ---------- */
+  .wk{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .wk:last-child{border-bottom:none}
+  .wk .d{width:30px;height:30px;border-radius:10px;background:#f1f1f3;display:flex;align-items:center;
+    justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+  .wk.today .d{background:var(--ink);color:#fff}
+  .wk .its{flex:1;font-weight:600;line-height:1.5;min-width:0}
+  .wk .kc{font-size:11px;color:var(--sub);white-space:nowrap}
+  .wk .re{border:none;background:#f1f1f3;border-radius:9px;width:32px;height:32px;font-size:13px;flex-shrink:0}
+  .shopitem{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line);
+    font-size:14.5px;font-weight:600;cursor:pointer;user-select:none}
+  .shopitem:last-child{border-bottom:none}
+  .shopitem .chk{width:22px;height:22px;border-radius:7px;border:1.5px solid #ccc;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+  .shopitem.done .chk{background:#34c759;border-color:#34c759}
+  .shopitem.done .nm{color:var(--sub);text-decoration:line-through}
+  .shopitem .nm{flex:1}
+  .shopitem .ct{font-size:11px;color:var(--sub);font-weight:700}
+  #wtGraph svg{width:100%;height:auto;display:block}
+  .wtline{font-size:12px;color:var(--sub);margin-top:6px;text-align:right}
   /* ---------- motion・アクセシビリティ ---------- */
   .seg button,.pill,.btn2,nav button,.icbtn,.slot .re{transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
   .gobtn{transition:transform .15s,box-shadow .2s,opacity .2s}
@@ -224,8 +244,19 @@
     <div class="total hidden" id="totalRow"><span>合計（目安）</span><span><b id="totalKcal">-</b> kcal ・ 調理 約<b id="totalMin">-</b> 分</span></div>
     <button class="gobtn" id="goBtn">🎲 ガチャをまわす</button>
     <div class="actions hidden" id="resultActions">
-      <button class="btn2" id="shareBtn">友だちに共有</button>
-      <button class="btn2 fill" id="decideBtn">✓ これに決めた</button>
+      <button class="btn2" id="shopBtn">🛒 買い物</button>
+      <button class="btn2" id="shareBtn">共有</button>
+      <button class="btn2 fill" id="decideBtn">✓ 決めた</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗓 1週間まとめてガチャ</h2>
+    <div class="note" style="margin-top:0">上のスタイル設定のまま、月〜日の夕食7日ぶんを一気に抽選。買い物リストも自動で作れます。</div>
+    <div id="weekList" style="margin-top:10px"></div>
+    <button class="btn2 fill" style="width:100%;margin-top:4px" id="weekBtn">🗓 1週間ぶんまわす</button>
+    <div class="actions hidden" id="weekActions">
+      <button class="btn2" id="weekShopBtn">🛒 1週間の買い物リスト</button>
     </div>
   </div>
 </div>
@@ -238,6 +269,15 @@
   </div>
 
   <div class="card" id="lunchBudgetCard"></div>
+
+  <div class="card">
+    <h2>たいじゅうメモ</h2>
+    <div class="formrow" style="margin-bottom:8px">
+      <input type="number" id="wtIn" step="0.1" min="30" max="200" placeholder="今日の体重（kg）" style="width:100%;text-align:left">
+      <button class="btn2 fill" id="wtBtn" style="width:96px;flex:none">記録</button>
+    </div>
+    <div id="wtGraph"></div>
+  </div>
 
   <div class="card">
     <h2>かんたん記録：食べたものをタップ</h2>
@@ -328,6 +368,14 @@
     <h2>ごはんのきろく</h2>
     <div id="histList"></div>
   </div>
+  <div class="card">
+    <h2>データのバックアップ</h2>
+    <div class="note" style="margin-top:0">記録はこの端末の中だけに保存されています。機種変更やブラウザのデータ削除にそなえて、ときどきファイルに保存しておくと安心です。</div>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn2" id="expBtn">📤 ファイルに保存</button>
+      <label class="btn2" style="text-align:center;cursor:pointer">📥 ファイルから復元<input type="file" id="impIn" accept=".json,application/json" class="hidden"></label>
+    </div>
+  </div>
 </div>
 </main>
 
@@ -340,8 +388,19 @@
 </nav>
 <div class="toast" id="toast"></div>
 
+<!-- ================= 買い物リスト（ボトムシート） ================= -->
+<div id="shop" class="sheetwrap hidden">
+  <div class="sheet">
+    <div class="sheet-head"><span>🛒 買い物リスト</span><button class="icbtn" id="shopClose" aria-label="閉じる">✕</button></div>
+    <div class="note" id="shopNote" style="margin-top:6px"></div>
+    <div id="shopList" style="margin-top:8px"></div>
+    <button class="btn2" id="shopReset" style="width:100%;margin-top:12px">チェックをぜんぶ外す</button>
+    <div class="note">※しょうゆ・塩などの基本調味料は含みません。分量はご家庭にあわせて。</div>
+  </div>
+</div>
+
 <!-- ================= プロフィール（目標カロリー計算） ================= -->
-<div id="profile" class="hidden">
+<div id="profile" class="sheetwrap hidden">
   <div class="sheet">
     <div class="sheet-head"><span>🎯 あなたに合う目標カロリー</span><button class="icbtn" id="profClose" aria-label="閉じる">✕</button></div>
     <div class="rowline"><span>性別</span><span class="pilltoggle">
@@ -827,7 +886,7 @@ $("oshiImgBtn").onclick=async()=>{
 function goPage(page){
   document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.page===page));
   ["gacha","lunch","menu","oshi","log"].forEach(p=>$("page-"+p).classList.toggle("hidden",page!==p));
-  if(page==="lunch")renderLunch();
+  if(page==="lunch"){renderLunch();renderWeight()}
   $("main").scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goPage(b.dataset.page));
@@ -1025,6 +1084,244 @@ $("lunchAddBtn").onclick=()=>{
   setLunchPhotoLabel("📷 写真を追加（あとからでもOK）");
 };
 
+/* ============ 材料マスタ（買い物リスト用・主材料のみ、調味料は除く） ============ */
+const ING={
+"肉じゃが":["牛こま切れ肉","じゃがいも","玉ねぎ","にんじん","しらたき"],"鶏の唐揚げ":["鶏もも肉","にんにく","しょうが","片栗粉"],
+"豚の生姜焼き":["豚ロース薄切り","玉ねぎ","しょうが"],"ハンバーグ":["合いびき肉","玉ねぎ","卵","パン粉"],
+"鮭の塩焼き":["生鮭"],"さばの味噌煮":["さば","しょうが","味噌"],"ぶりの照り焼き":["ぶり"],
+"麻婆豆腐":["豆腐","豚ひき肉","長ねぎ","豆板醤"],"回鍋肉":["豚バラ薄切り","キャベツ","ピーマン","甜麺醤"],
+"青椒肉絲":["牛こま切れ肉","ピーマン","たけのこ水煮"],"鶏の照り焼き":["鶏もも肉"],
+"とんかつ":["豚ロース厚切り","卵","パン粉","キャベツ"],"エビフライ":["えび","卵","パン粉","キャベツ"],
+"餃子":["豚ひき肉","キャベツ","にら","餃子の皮"],"肉野菜炒め":["豚こま切れ肉","キャベツ","もやし","にんじん","ピーマン"],
+"鶏むねの塩麹焼き":["鶏むね肉","塩麹"],"豚しゃぶサラダ":["豚しゃぶ用肉","レタス","トマト","きゅうり"],
+"チキン南蛮":["鶏もも肉","卵","タルタルソース"],"さわらの西京焼き":["さわらの西京漬け"],
+"肉豆腐":["牛こま切れ肉","豆腐","長ねぎ"],"ロールキャベツ":["キャベツ","合いびき肉","玉ねぎ","コンソメ"],
+"白身魚のムニエル":["白身魚","バター","レモン"],"鶏と大根の煮物":["鶏もも肉","大根","しょうが"],
+"油淋鶏":["鶏もも肉","長ねぎ","片栗粉"],"クリームシチュー":["鶏もも肉","じゃがいも","にんじん","玉ねぎ","シチュールー","牛乳"],
+"ビーフシチュー":["牛角切り肉","じゃがいも","にんじん","玉ねぎ","デミグラスルー"],
+"おでん":["大根","卵","こんにゃく","ちくわ","厚揚げ","おでんの素"],
+"寄せ鍋":["白菜","長ねぎ","豆腐","鶏もも肉","きのこ","鍋つゆ"],"キムチ鍋":["豚バラ薄切り","キムチ","豆腐","にら","鍋つゆ"],
+"すき焼き":["牛薄切り肉","白菜","長ねぎ","豆腐","しらたき","卵"],"しゃぶしゃぶ":["豚しゃぶ用肉","白菜","長ねぎ","ポン酢"],
+"豚キムチ炒め":["豚バラ薄切り","キムチ","にら","もやし"],"ニラ玉":["卵","にら"],
+"コロッケ":["じゃがいも","合いびき肉","玉ねぎ","パン粉"],"メンチカツ":["合いびき肉","玉ねぎ","卵","パン粉"],
+"アジフライ":["あじ","卵","パン粉","キャベツ"],"アジの開き":["あじの開き"],"さんまの塩焼き":["さんま","大根"],
+"ホッケの塩焼き":["ほっけ"],"カレイの煮付け":["かれい","しょうが"],"ぶり大根":["ぶり","大根","しょうが"],
+"さばの塩焼き":["さば","大根"],"鮭のホイル焼き":["生鮭","玉ねぎ","きのこ","バター"],
+"たらのホイル焼き":["たら","玉ねぎ","きのこ","バター"],"豚の角煮":["豚バラかたまり肉","卵","長ねぎ","しょうが"],
+"八宝菜":["豚こま切れ肉","白菜","にんじん","きくらげ","うずら卵"],"エビチリ":["えび","長ねぎ","チリソース"],
+"酢豚":["豚角切り肉","玉ねぎ","ピーマン","にんじん"],"棒棒鶏":["鶏むね肉","きゅうり","トマト","ごまだれ"],
+"蒸し鶏のサラダ":["鶏むね肉","レタス","トマト"],"手羽先の甘辛焼き":["鶏手羽先","にんにく"],
+"鶏つくね":["鶏ひき肉","長ねぎ","卵"],"豆腐ハンバーグ":["豆腐","鶏ひき肉","玉ねぎ"],
+"天ぷら盛り合わせ":["えび","なす","かぼちゃ","大葉","天ぷら粉"],"刺身盛り合わせ":["刺身盛り合わせ"],
+"ステーキ":["牛ステーキ肉","にんにく"],"豚バラ大根":["豚バラ薄切り","大根","しょうが"],
+"鶏肉のトマト煮":["鶏もも肉","玉ねぎ","トマト缶"],"ポークソテー":["豚ロース厚切り","玉ねぎ"],
+"筑前煮":["鶏もも肉","れんこん","ごぼう","にんじん","こんにゃく","干ししいたけ"],
+"ほうれん草のおひたし":["ほうれん草","かつお節"],"きんぴらごぼう":["ごぼう","にんじん"],
+"ポテトサラダ":["じゃがいも","きゅうり","ハム","マヨネーズ"],"冷奴":["豆腐","長ねぎ","しょうが"],"枝豆":["枝豆"],
+"かぼちゃの煮物":["かぼちゃ"],"ひじきの煮物":["ひじき","にんじん","油揚げ","大豆水煮"],
+"切干大根の煮物":["切干大根","にんじん","油揚げ"],"もやしナムル":["もやし","ごま油"],
+"きゅうりの酢の物":["きゅうり","わかめ"],"ブロッコリーの胡麻和え":["ブロッコリー","すりごま"],
+"マカロニサラダ":["マカロニ","きゅうり","ハム","マヨネーズ"],"卵焼き":["卵"],
+"なすの揚げ浸し":["なす","しょうが","めんつゆ"],"トマトとアボカドのサラダ":["トマト","アボカド"],
+"キャベツの浅漬け":["キャベツ","浅漬けの素"],"春雨サラダ":["春雨","きゅうり","ハム"],
+"温野菜サラダ":["ブロッコリー","にんじん","かぼちゃ"],"無限ピーマン":["ピーマン","ツナ缶"],
+"大根と水菜のサラダ":["大根","水菜"],"白和え":["豆腐","ほうれん草","にんじん","すりごま"],
+"小松菜の煮浸し":["小松菜","油揚げ","めんつゆ"],"ちくわの磯辺揚げ":["ちくわ","青のり","天ぷら粉"],
+"厚揚げ焼き":["厚揚げ","長ねぎ"],"揚げ出し豆腐":["豆腐","片栗粉","めんつゆ","大根"],
+"コールスロー":["キャベツ","にんじん","コーン缶","マヨネーズ"],"シーザーサラダ":["レタス","ベーコン","粉チーズ","クルトン"],
+"海藻サラダ":["海藻ミックス","レタス"],"カプレーゼ":["トマト","モッツァレラチーズ","バジル"],
+"ごぼうサラダ":["ごぼう","にんじん","マヨネーズ","すりごま"],"たたききゅうり":["きゅうり","ごま油"],
+"オクラのおかか和え":["オクラ","かつお節"],"もずく酢":["もずく酢"],"納豆":["納豆"],"キムチ":["キムチ"],
+"ほうれん草のバター炒め":["ほうれん草","バター","コーン缶"],"アスパラベーコン":["アスパラガス","ベーコン"],
+"ジャーマンポテト":["じゃがいも","ベーコン","玉ねぎ"],"じゃがバター":["じゃがいも","バター"],
+"れんこんのきんぴら":["れんこん"],"五目豆":["大豆水煮","にんじん","こんにゃく","昆布"],"冷やしトマト":["トマト"],
+"里芋の煮っころがし":["里芋"],"大学芋":["さつまいも","黒ごま"],
+"豆腐とわかめの味噌汁":["豆腐","わかめ","味噌"],"豚汁":["豚こま切れ肉","大根","にんじん","ごぼう","こんにゃく","味噌"],
+"けんちん汁":["大根","にんじん","ごぼう","豆腐","こんにゃく"],"コンソメスープ":["玉ねぎ","にんじん","ベーコン","コンソメ"],
+"かき玉スープ":["卵","長ねぎ","鶏がらスープの素"],"わかめスープ":["わかめ","長ねぎ","いりごま"],
+"コーンスープ":["コーンクリーム缶","牛乳"],"ミネストローネ":["トマト缶","玉ねぎ","にんじん","セロリ","ベーコン"],
+"中華スープ":["しいたけ","長ねぎ","鶏がらスープの素"],"あさりの味噌汁":["あさり","味噌"],
+"なめこの味噌汁":["なめこ","豆腐","味噌"],"しじみの味噌汁":["しじみ","味噌"],"大根の味噌汁":["大根","油揚げ","味噌"],
+"なすの味噌汁":["なす","味噌"],"じゃがいもの味噌汁":["じゃがいも","玉ねぎ","味噌"],
+"クラムチャウダー":["あさり","じゃがいも","玉ねぎ","牛乳","ベーコン"],"オニオンスープ":["玉ねぎ","コンソメ","粉チーズ"],
+"野菜スープ":["キャベツ","にんじん","玉ねぎ","ベーコン","コンソメ"],"すまし汁":["豆腐","三つ葉","白だし"],
+"白ごはん":["米"],"雑穀ごはん":["米","雑穀ミックス"],"玄米ごはん":["玄米"],
+"炊き込みごはん":["米","鶏もも肉","にんじん","ごぼう","油揚げ"],"トースト":["食パン"],"ごはん（小盛り）":["米"],
+"おにぎり":["米","焼きのり"],"ロールパン":["ロールパン"],"フランスパン":["フランスパン"],
+"もち麦ごはん":["米","もち麦"],"おかゆ":["米"],"焼きおにぎり":["米"],"ごはん（半膳）":["米"],"オートミールごはん":["オートミール"],
+"カレーライス":["米","カレールー","豚こま切れ肉","じゃがいも","にんじん","玉ねぎ"],
+"親子丼":["米","鶏もも肉","卵","玉ねぎ"],"牛丼":["米","牛薄切り肉","玉ねぎ"],
+"チャーハン":["米","卵","長ねぎ","チャーシュー"],"オムライス":["米","卵","鶏もも肉","玉ねぎ","ケチャップ"],
+"ナポリタン":["スパゲッティ","ウインナー","ピーマン","玉ねぎ","ケチャップ"],"ペペロンチーノ":["スパゲッティ","にんにく","唐辛子"],
+"ミートソースパスタ":["スパゲッティ","合いびき肉","玉ねぎ","トマト缶"],"焼きそば":["中華麺","豚こま切れ肉","キャベツ","もやし"],
+"かけうどん":["うどん","長ねぎ"],"冷やしうどん":["うどん","めんつゆ","長ねぎ"],
+"ラーメン":["中華麺","チャーシュー","卵","長ねぎ"],"ざるそば":["そば","めんつゆ","焼きのり"],
+"天津飯":["米","卵","かにかま"],"ロコモコ丼":["米","合いびき肉","卵","レタス"],
+"タコライス":["米","合いびき肉","レタス","トマト","チーズ"],"ビビンバ丼":["米","牛ひき肉","ほうれん草","もやし","にんじん","卵"],
+"鍋焼きうどん":["うどん","卵","かまぼこ","長ねぎ"],"カルボナーラ":["スパゲッティ","ベーコン","卵","粉チーズ"],
+"冷やし中華":["中華麺","ハム","きゅうり","卵","トマト"],"海鮮丼":["米","刺身盛り合わせ"],
+"卵かけごはん":["米","卵"],"そうめん":["そうめん","めんつゆ","長ねぎ"],"焼うどん":["うどん","豚こま切れ肉","キャベツ"],
+"明太子パスタ":["スパゲッティ","明太子","焼きのり","バター"],"和風きのこパスタ":["スパゲッティ","きのこ","バター","めんつゆ"],
+"中華丼":["米","豚こま切れ肉","白菜","にんじん","うずら卵"],"麻婆丼":["米","豆腐","豚ひき肉","長ねぎ"],
+"カツ丼":["米","豚ロース厚切り","卵","玉ねぎ","パン粉"],"天丼":["米","えび","なす","天ぷら粉"],
+"三色そぼろ丼":["米","鶏ひき肉","卵","いんげん"],"しらす丼":["米","しらす","大葉","卵"],
+"納豆ごはん":["米","納豆","卵"],"お茶漬け":["米","お茶漬けの素"],"雑炊":["米","卵","長ねぎ"],
+"リゾット":["米","きのこ","玉ねぎ","粉チーズ"],"ドリア":["米","鶏もも肉","玉ねぎ","ホワイトソース","チーズ"],
+"グラタン":["マカロニ","鶏もも肉","玉ねぎ","ホワイトソース","チーズ"],"お好み焼き":["お好み焼き粉","キャベツ","豚バラ薄切り","卵"],
+"ハヤシライス":["米","牛薄切り肉","玉ねぎ","ハヤシルー"],"カレーうどん":["うどん","豚こま切れ肉","長ねぎ","カレールー"],
+"肉うどん":["うどん","牛薄切り肉","長ねぎ"],"きつねうどん":["うどん","油揚げ","長ねぎ"],
+"サンドイッチ":["食パン","ハム","卵","レタス"],"ピザトースト":["食パン","チーズ","ピーマン","ケチャップ"],
+"ガパオライス":["米","鶏ひき肉","ピーマン","卵","バジル"],"オートミール雑炊":["オートミール","卵","長ねぎ"],
+"糖質0麺の冷やし中華":["糖質0麺","ハム","きゅうり","卵"],"糖質0麺のラーメン":["糖質0麺","チャーシュー","卵","長ねぎ"]
+};
+
+/* ============ 1週間まとめてガチャ ============ */
+const WK_LABEL=["月","火","水","木","金","土","日"];
+let week=store.get("week",null);
+function drawWeek(){
+  const days=[];
+  for(let i=0;i<7;i++){
+    const m=drawMenu();
+    m.forEach(d=>recent[d.name]=Date.now());
+    days.push({items:m.map(d=>d.name),kcal:m.reduce((a,d)=>a+d.kcal,0)});
+  }
+  store.set("recent",recent);
+  week={ts:Date.now(),days};store.set("week",week);
+  renderWeek();
+  toast("1週間ぶんの献立ができました");
+}
+function rerollWeekDay(i){
+  const m=drawMenu();
+  m.forEach(d=>recent[d.name]=Date.now());store.set("recent",recent);
+  week.days[i]={items:m.map(d=>d.name),kcal:m.reduce((a,d)=>a+d.kcal,0)};
+  store.set("week",week);renderWeek();
+}
+function renderWeek(){
+  const box=$("weekList");
+  if(!week){box.innerHTML="";$("weekActions").classList.add("hidden");return}
+  const todayIdx=(new Date().getDay()+6)%7;
+  box.innerHTML="";
+  week.days.forEach((d,i)=>{
+    const div=document.createElement("div");
+    div.className="wk"+(i===todayIdx?" today":"");
+    div.innerHTML='<span class="d">'+WK_LABEL[i]+'</span><span class="its">'+d.items.join("・")+'</span>'
+      +'<span class="kc">'+d.kcal+'kcal</span>'
+      +'<button class="re" data-i="'+i+'" aria-label="この日を引き直す">↺</button>';
+    div.querySelector(".re").onclick=()=>rerollWeekDay(i);
+    box.appendChild(div);
+  });
+  $("weekActions").classList.remove("hidden");
+  $("weekBtn").textContent="🗓 もう一回 1週間ぶんまわす";
+}
+$("weekBtn").onclick=drawWeek;
+
+/* ============ 買い物リスト ============ */
+let shop=store.get("shop",{items:{},done:{},label:""});
+function buildShop(nameLists,label){
+  const items={};
+  nameLists.flat().forEach(n=>{(ING[n]||[n]).forEach(g=>{items[g]=(items[g]||0)+1})});
+  const done={};
+  Object.keys(items).forEach(k=>{if(shop.done&&shop.done[k])done[k]=1});
+  shop={items,done,label,ts:Date.now()};store.set("shop",shop);
+  renderShop();
+  $("shop").classList.remove("hidden");
+}
+function renderShop(){
+  const keys=Object.keys(shop.items);
+  const left=keys.filter(k=>!shop.done[k]).length;
+  $("shopNote").textContent=shop.label+"の材料 "+keys.length+"品・のこり"+left+"品";
+  const box=$("shopList");box.innerHTML="";
+  keys.forEach(k=>{
+    const div=document.createElement("div");
+    div.className="shopitem"+(shop.done[k]?" done":"");
+    div.innerHTML='<span class="chk">'+(shop.done[k]?"✓":"")+'</span><span class="nm">'+k+'</span>'
+      +(shop.items[k]>1?'<span class="ct">×'+shop.items[k]+'</span>':'');
+    div.onclick=()=>{
+      if(shop.done[k])delete shop.done[k];else shop.done[k]=1;
+      store.set("shop",shop);renderShop();
+    };
+    box.appendChild(div);
+  });
+}
+$("shopBtn").onclick=()=>{if(current.length)buildShop([current.map(d=>d.name)],"今夜の献立")};
+$("weekShopBtn").onclick=()=>{if(week)buildShop(week.days.map(d=>d.items),"1週間")};
+$("shopClose").onclick=()=>$("shop").classList.add("hidden");
+$("shop").onclick=e=>{if(e.target.id==="shop")$("shop").classList.add("hidden")};
+$("shopReset").onclick=()=>{shop.done={};store.set("shop",shop);renderShop()};
+
+/* ============ たいじゅうメモ ============ */
+let weightLog=store.get("weight",[]);
+$("wtBtn").onclick=()=>{
+  const v=parseFloat($("wtIn").value);
+  if(!(v>=30&&v<=200)){toast("30〜200kgの範囲で入力してください");return}
+  const k=dkey(Date.now());
+  const hit=weightLog.find(e=>e.d===k);
+  if(hit)hit.kg=v;else weightLog.push({d:k,ts:Date.now(),kg:v});
+  if(weightLog.length>400)weightLog=weightLog.slice(-400);
+  store.set("weight",weightLog);
+  $("wtIn").value="";renderWeight();
+  toast("体重 "+v+"kg を記録しました");
+};
+function renderWeight(){
+  const box=$("wtGraph");
+  if(!weightLog.length){
+    box.innerHTML='<div class="note" style="margin-top:0">1日1回記録すると、ここにグラフが育ちます。同じ日に入れ直すと上書きされます。</div>';
+    return;
+  }
+  const pts=weightLog.slice(-30);
+  const goal=(prof.goal==="lose")?(prof.w-prof.kg):null;
+  const vals=pts.map(p=>p.kg).concat(goal?[goal]:[]);
+  const lo=Math.min(...vals)-0.5,hi=Math.max(...vals)+0.5;
+  const W=320,H=110,PX=8,PY=10;
+  const x=i=>pts.length<2?W/2:PX+(W-PX*2)*i/(pts.length-1);
+  const y=v=>PY+(H-PY*2)*(1-(v-lo)/(hi-lo));
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" aria-label="体重グラフ">';
+  if(goal){svg+='<line x1="'+PX+'" y1="'+y(goal)+'" x2="'+(W-PX)+'" y2="'+y(goal)+'" stroke="#34c759" stroke-width="1.5" stroke-dasharray="5 4"/>'
+    +'<text x="'+(W-PX)+'" y="'+(y(goal)-4)+'" font-size="9" fill="#34c759" text-anchor="end">目標 '+goal.toFixed(1)+'</text>'}
+  if(pts.length>1){
+    svg+='<polyline fill="none" stroke="#e1306c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="'
+      +pts.map((p,i)=>x(i)+','+y(p.kg)).join(" ")+'"/>';
+  }
+  pts.forEach((p,i)=>{svg+='<circle cx="'+x(i)+'" cy="'+y(p.kg)+'" r="'+(i===pts.length-1?4:2.5)+'" fill="#fff" stroke="#e1306c" stroke-width="2"/>'});
+  const last=pts[pts.length-1];
+  svg+='<text x="'+x(pts.length-1)+'" y="'+(y(last.kg)-8)+'" font-size="11" font-weight="700" fill="#1c1c1e" text-anchor="'+(pts.length>3?"end":"middle")+'">'+last.kg.toFixed(1)+'kg</text>';
+  svg+='</svg>';
+  let diff="";
+  if(pts.length>1){
+    const d=(last.kg-pts[pts.length-2].kg);
+    diff='<div class="wtline">前回から '+(d>0?"+":"")+d.toFixed(1)+'kg'+(goal?('・目標まで '+(last.kg-goal>0?(last.kg-goal).toFixed(1)+'kg':'達成🎉')):'')+'</div>';
+  }
+  box.innerHTML=svg+diff;
+}
+
+/* ============ バックアップ・復元 ============ */
+const BK_KEYS=["menu","hist","recent","family","onboarded","profile","lunchlog","week","shop","weight"];
+$("expBtn").onclick=()=>{
+  const data={app:"uchimenu",ver:1,ts:Date.now()};
+  BK_KEYS.forEach(k=>{const v=store.get(k,null);if(v!==null)data[k]=v});
+  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  const a=document.createElement("a");
+  const d=new Date();
+  a.href=URL.createObjectURL(blob);
+  a.download="uchimenu-backup-"+d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2)+".json";
+  a.click();
+  toast("バックアップを保存しました");
+};
+$("impIn").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      if(data.app!=="uchimenu")throw 0;
+      if(!confirm("この端末の記録を、ファイルの内容で置き換えます。よろしいですか？"))return;
+      BK_KEYS.forEach(k=>{if(k in data)store.set(k,data[k])});
+      location.reload();
+    }catch(err){toast("バックアップファイルを読み込めませんでした")}
+  };
+  r.readAsText(f);
+};
+
 /* ============ 初回ガイド（オンボーディング） ============ */
 let obStep=0;
 const obPicked=new Set();
@@ -1116,7 +1413,7 @@ if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
 
-refreshAll();renderHist();
+refreshAll();renderHist();renderWeek();renderWeight();
 </script>
 </body>
 </html>

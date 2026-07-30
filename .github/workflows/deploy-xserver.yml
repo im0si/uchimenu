@@ -44,7 +44,8 @@ jobs:
           password: ${{ secrets.XSERVER_FTP_PASSWORD }}
           protocol: ftps
           local-dir: out/
-          server-dir: ${{ secrets.XSERVER_REMOTE_DIR }}
+          # サブドメインのドキュメントルートはフルネーム形式のフォルダ
+          server-dir: /run-digital.com/public_html/uchimenu.run-digital.com/app/
 
       - name: Skip note
         if: steps.check.outputs.configured != 'true'

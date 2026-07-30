@@ -1,31 +1,36 @@
-name: Check Xserver directories
+name: Xserver maintenance
 
-# 手動実行専用の調査ワークフロー。FTPS でサーバーのフォルダ構成を一覧して
-# アプリの設置場所を確認する（ファイルの変更は一切しない）。
+# 手動実行専用。task=list でフォルダ確認、task=cleanup で
+# 誤配置フォルダ（/run-digital.com/public_html/uchimenu）の削除＋確認を行う。
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "list または cleanup"
+        required: true
+        default: "list"
 
 jobs:
-  check:
+  run:
     runs-on: ubuntu-latest
     steps:
-      - name: List candidate directories
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Run task
         env:
           H: ${{ secrets.XSERVER_FTP_HOST }}
           U: ${{ secrets.XSERVER_FTP_USER }}
           P: ${{ secrets.XSERVER_FTP_PASSWORD }}
+          TASK: ${{ inputs.task }}
         run: |
-          list() {
-            echo "===== $1"
-            curl -sS --ssl-reqd -u "$U:$P" "ftp://$H$1" || echo "(cannot list)"
-            echo
-          }
-          list "/"
-          list "/run-digital.com/"
-          list "/run-digital.com/public_html/"
-          list "/run-digital.com/public_html/uchimenu/"
-          list "/run-digital.com/public_html/uchimenu/app/"
-          list "/run-digital.com/public_html/app/"
-          list "/uchimenu.run-digital.com/"
-          list "/uchimenu.run-digital.com/public_html/"
-          list "/app/"
+          if [ "$TASK" = "cleanup" ]; then
+            lftp -u "$U","$P" -e "set ftp:ssl-force true; rm -rf /run-digital.com/public_html/uchimenu; bye" "$H" && echo "stray folder removed"
+          fi
+          echo "===== uchimenu.run-digital.com/"
+          lftp -u "$U","$P" -e "set ftp:ssl-force true; cls -la /run-digital.com/public_html/uchimenu.run-digital.com/; bye" "$H" || true
+          echo "===== uchimenu.run-digital.com/app/"
+          lftp -u "$U","$P" -e "set ftp:ssl-force true; cls -la /run-digital.com/public_html/uchimenu.run-digital.com/app/; bye" "$H" || true
+          echo "===== stray folder (should fail after cleanup)"
+          lftp -u "$U","$P" -e "set ftp:ssl-force true; cls -la /run-digital.com/public_html/uchimenu/; bye" "$H" || echo "OK: stray folder is gone"

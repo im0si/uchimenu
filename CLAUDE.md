@@ -6,6 +6,7 @@
 
 「うちめにゅー」— 今夜の献立をガチャで決める、単一HTML完結のPWA。
 GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
+本番サイトは https://uchimenu.run-digital.com/ （WordPressの記事メディア＋ `/app/` にこのアプリ。main への push で自動FTPS転送される）。
 
 - `index.html` … アプリ本体（HTML/CSS/JS をすべて内包）
 - `sw.js` … Service Worker（オフラインキャッシュ、ネット優先・失敗時キャッシュ）

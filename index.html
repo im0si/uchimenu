@@ -710,11 +710,59 @@ $("decideBtn").onclick=()=>{
   $("decideBtn").textContent="✓ きろくしました";
   toast("今夜の献立を「きろく」に残しました");
 };
+/* ガチャ結果をお品書き風の画像カードにする（SNS共有用） */
+function resultCard(menu){
+  const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;
+  const g=c.getContext("2d");
+  g.fillStyle="#f9f5ec";g.fillRect(0,0,W,H);
+  g.strokeStyle="#d9cdb2";g.lineWidth=3;g.strokeRect(36,36,W-72,H-72);g.strokeRect(48,48,W-96,H-96);
+  g.textAlign="center";
+  g.font="90px serif";g.fillText("🎲",W/2,175);
+  g.fillStyle="#2b2620";g.font="600 58px 'Hiragino Mincho ProN','Yu Mincho',serif";
+  g.fillText("今夜のうちめにゅー",W/2,280);
+  const d=new Date();
+  g.fillStyle="#9a8d76";g.font="26px 'Hiragino Mincho ProN',serif";
+  g.fillText((d.getMonth()+1)+"月"+d.getDate()+"日（"+WDAYS[d.getDay()]+"）の献立",W/2,330);
+  const CATC={"主菜":"#ff6b35","副菜":"#34c759","汁物":"#409cff","主食":"#f7b32b","一皿":"#af52de"};
+  const rowH=Math.min(150,760/menu.length);
+  let y=430;
+  menu.forEach(m=>{
+    g.fillStyle=CATC[m.cat]||"#8a7a5c";
+    const bw=110,bh=44;
+    g.beginPath();g.roundRect(150,y-bh+8,bw,bh,10);g.fill();
+    g.fillStyle="#fff";g.font="700 26px -apple-system,'Hiragino Sans',sans-serif";
+    g.fillText(m.cat,150+bw/2,y-2);
+    g.fillStyle="#2b2620";g.textAlign="left";
+    g.font="600 44px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    g.fillText(m.name,300,y+6,560);
+    g.fillStyle="#9a8d76";g.textAlign="right";
+    g.font="26px -apple-system,sans-serif";g.fillText(m.kcal+"kcal",W-150,y+2);
+    g.textAlign="center";
+    y+=rowH;
+  });
+  g.strokeStyle="#d9cdb2";g.lineWidth=1.5;
+  g.beginPath();g.moveTo(150,y-20);g.lineTo(W-150,y-20);g.stroke();
+  g.fillStyle="#2b2620";g.font="700 40px -apple-system,'Hiragino Sans',sans-serif";
+  g.fillText("合計 約"+menu.reduce((a,x)=>a+x.kcal,0)+" kcal",W/2,y+50);
+  g.fillStyle="#b0a68f";g.font="26px -apple-system,sans-serif";
+  g.fillText("献立ガチャ「うちめにゅー」",W/2,H-110);
+  g.fillText("uchimenu.run-digital.com",W/2,H-70);
+  return c;
+}
 $("shareBtn").onclick=async()=>{
   if(!current.length)return;
   const text="今夜の献立ガチャ結果 🎲\n"+current.map(d=>d.cat+"："+d.name).join("\n")+"\n合計 約"+current.reduce((a,d)=>a+d.kcal,0)+"kcal\n#うちめにゅー";
-  if(navigator.share){try{await navigator.share({text})}catch(e){}}
-  else{try{await navigator.clipboard.writeText(text);toast("結果をコピーしました")}catch(e){toast("コピーできませんでした")}}
+  const blob=await new Promise(r=>resultCard(current).toBlob(r,"image/png"));
+  const file=blob?new File([blob],"uchimenu.png",{type:"image/png"}):null;
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],text});return}catch(e){}
+  }
+  if(navigator.share){try{await navigator.share({text});return}catch(e){}}
+  if(file){
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="uchimenu.png";a.click();
+    toast("献立カードの画像を保存しました");return;
+  }
+  try{await navigator.clipboard.writeText(text);toast("結果をコピーしました")}catch(e){toast("コピーできませんでした")}
 };
 
 /* ============ めにゅー登録 ============ */

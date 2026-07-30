@@ -13,6 +13,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `manifest.webmanifest` … PWA マニフェスト（`start_url` / `scope` は `./`）
 - `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類
 - `.github/workflows/deploy-xserver.yml` … main への push 時、アプリ6ファイルをエックスサーバー（WPサイトの `/app/`）へFTPS自動転送。接続情報は GitHub Secrets（`XSERVER_FTP_HOST` / `XSERVER_FTP_USER` / `XSERVER_FTP_PASSWORD`。転送先パスはワークフロー内に直書き）。未設定時は何もしない
+- `articles/` … SEO記事の原稿（HTML。冒頭に `<!--meta {...} -->` でタイトル・スラッグ・カテゴリ・抜粋）。`post-articles.yml`（手動実行）が WordPress REST API 経由で**下書き**として投稿する。Secrets: `WP_APP_USER` / `WP_APP_PASS`。同スラッグ既存ならスキップ
 - `wp-theme/uchimenu/` … WPサイト（uchimenu.run-digital.com）用テーマ「和モダンポップ」。和紙×朱×山吹、トップにガチャデモ・スマホモック。`deploy-theme.yml` で `wp-content/themes/uchimenu/` へ自動転送。アプリの「必ず守るルール」はこのテーマには適用されない（Google Fonts使用可）が、色・世界観はアプリと揃えること。記事内CTAはショートコード `[gacha_cta kcal="600" dishes="3" label="…"]`
 
 ビルド工程・パッケージマネージャ・テストは存在しない。ブラウザで `index.html` を開けば動く。
@@ -93,6 +94,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `drawWeek()` / `rerollWeekDay(i)` / `renderWeek()` … 1週間ガチャ。現在のモード設定で `drawMenu()` を7回呼ぶ（`recent` を都度更新して重複を抑制）
 - `buildShop(nameLists,label)` / `renderShop()` … 料理名→`ING`（材料マスタ、全186品・主材料のみ調味料除く）で材料を集計（重複は ×N 表示）。チェック状態は再生成時も同名材料なら引き継ぐ
 - `renderWeight()` … 体重グラフのSVG生成。減量目標（`prof.w - prof.kg`）があれば緑の目標ラインを描く
+- `resultCard(menu)` … ガチャ結果を1080×1350のお品書き風Canvas画像に。共有ボタンは 画像+テキスト共有 → テキスト共有 → 画像DL → テキストコピー の順にフォールバック
 
 ### データ構造
 

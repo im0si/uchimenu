@@ -1,0 +1,68 @@
+name: Post articles to WordPress
+
+# 手動実行専用。articles/*.html を WordPress へ「下書き」として投稿する。
+# 同じスラッグの記事が既にあればスキップ（二重投稿しない）。
+# 必要な Secrets: WP_APP_USER（WPユーザー名）/ WP_APP_PASS（アプリケーションパスワード）
+
+on: workflow_dispatch
+
+env:
+  WP_BASE: https://uchimenu.run-digital.com
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Post drafts via REST API
+        env:
+          WP_USER: ${{ secrets.WP_APP_USER }}
+          WP_PASS: ${{ secrets.WP_APP_PASS }}
+        run: |
+          python3 - <<'EOF'
+          import os, re, json, glob, base64, urllib.request, urllib.parse
+
+          BASE = os.environ["WP_BASE"].rstrip("/") + "/wp-json/wp/v2"
+          auth = base64.b64encode(f'{os.environ["WP_USER"]}:{os.environ["WP_PASS"]}'.encode()).decode()
+
+          def api(method, path, data=None):
+              req = urllib.request.Request(BASE + path, method=method)
+              req.add_header("Authorization", "Basic " + auth)
+              body = None
+              if data is not None:
+                  body = json.dumps(data).encode()
+                  req.add_header("Content-Type", "application/json")
+              with urllib.request.urlopen(req, body, timeout=30) as r:
+                  return json.loads(r.read().decode())
+
+          def category_id(name):
+              found = api("GET", "/categories?per_page=100&search=" + urllib.parse.quote(name))
+              for c in found:
+                  if c["name"] == name:
+                      return c["id"]
+              return api("POST", "/categories", {"name": name})["id"]
+
+          posted = skipped = 0
+          for f in sorted(glob.glob("articles/*.html")):
+              raw = open(f, encoding="utf-8").read()
+              m = re.match(r"<!--meta\s+(\{.*?\})\s*-->\s*(.*)", raw, re.S)
+              if not m:
+                  print(f"SKIP(no meta): {f}"); continue
+              meta = json.loads(m.group(1))
+              content = m.group(2)
+              existing = api("GET", "/posts?status=any&slug=" + meta["slug"])
+              if existing:
+                  print(f"SKIP(exists): {meta['slug']}"); skipped += 1; continue
+              post = api("POST", "/posts", {
+                  "title":      meta["title"],
+                  "slug":       meta["slug"],
+                  "status":     "draft",
+                  "content":    content,
+                  "excerpt":    meta.get("excerpt", ""),
+                  "categories": [category_id(meta["category"])],
+              })
+              print(f"POSTED(draft): {meta['slug']} -> id {post['id']}"); posted += 1
+
+          print(f"done: posted {posted}, skipped {skipped}")
+          EOF

@@ -1,0 +1,38 @@
+name: Deploy WP theme to Xserver
+
+# wp-theme/ 配下が main に push されたら、WordPress のテーマディレクトリへ自動転送する。
+# 接続情報はアプリ転送と同じ Secrets を使う。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wp-theme/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check FTP secrets
+        id: check
+        env:
+          HOST: ${{ secrets.XSERVER_FTP_HOST }}
+        run: echo "configured=$([ -n "$HOST" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload via FTPS
+        if: steps.check.outputs.configured == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.XSERVER_FTP_HOST }}
+          username: ${{ secrets.XSERVER_FTP_USER }}
+          password: ${{ secrets.XSERVER_FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: wp-theme/uchimenu/
+          server-dir: /run-digital.com/public_html/uchimenu.run-digital.com/wp-content/themes/uchimenu/
+
+      - name: Skip note
+        if: steps.check.outputs.configured != 'true'
+        run: echo "FTP secrets are not set yet - skipping deploy."

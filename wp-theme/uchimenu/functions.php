@@ -1,0 +1,122 @@
+<?php
+/**
+ * うちめにゅー テーマ
+ */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+define( 'UCHIMENU_APP_PATH', '/app/' ); // アプリの設置パス
+
+function uchimenu_setup() {
+	add_theme_support( 'title-tag' );
+	add_theme_support( 'post-thumbnails' );
+	add_theme_support( 'automatic-feed-links' );
+	add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) );
+	add_theme_support( 'responsive-embeds' );
+	set_post_thumbnail_size( 800, 450, true );
+}
+add_action( 'after_setup_theme', 'uchimenu_setup' );
+
+function uchimenu_scripts() {
+	wp_enqueue_style( 'uchimenu-fonts',
+		'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Archivo+Black&display=swap',
+		array(), null );
+	wp_enqueue_style( 'uchimenu-style', get_stylesheet_uri(), array( 'uchimenu-fonts' ),
+		wp_get_theme()->get( 'Version' ) );
+	wp_enqueue_script( 'uchimenu-front', get_template_directory_uri() . '/front.js', array(),
+		wp_get_theme()->get( 'Version' ), true );
+}
+add_action( 'wp_enqueue_scripts', 'uchimenu_scripts' );
+
+/** アプリのURL（ディープリンク引数つき） */
+function uchimenu_app_url( $args = array() ) {
+	$url = home_url( UCHIMENU_APP_PATH );
+	if ( $args ) $url = add_query_arg( $args, $url );
+	return esc_url( $url );
+}
+
+/** カテゴリ名 → 色クラス */
+function uchimenu_cat_class( $name ) {
+	$map = array(
+		'献立のヒント'   => 'g-shu',
+		'ダイエット'     => 'g-matcha',
+		'コンビニ・外食' => 'g-ai',
+		'料理とカロリー' => 'g-yama',
+		'レシピ'         => 'g-sakura',
+	);
+	if ( isset( $map[ $name ] ) ) return $map[ $name ];
+	$pool = array( 'g-shu', 'g-ai', 'g-matcha', 'g-yama', 'g-sakura' );
+	return $pool[ abs( crc32( $name ) ) % 5 ];
+}
+
+/** 記事カードのフォールバックサムネイル（自作SVG） */
+function uchimenu_fallback_thumb( $i ) {
+	$svgs = array(
+		'<svg viewBox="0 0 100 100"><rect x="18" y="18" width="64" height="64" rx="16" fill="#fffdf9" stroke="#e0cfc9" stroke-width="2"/><circle cx="36" cy="36" r="6" fill="#bf4433"/><circle cx="64" cy="36" r="6" fill="#46608c"/><circle cx="50" cy="50" r="6" fill="#d9982f"/><circle cx="36" cy="64" r="6" fill="#5b7a52"/><circle cx="64" cy="64" r="6" fill="#c9737f"/></svg>',
+		'<svg viewBox="0 0 100 100"><rect x="12" y="26" width="76" height="52" rx="10" fill="#8c6b4a"/><rect x="17" y="31" width="66" height="42" rx="6" fill="#6e5138"/><rect x="20" y="34" width="28" height="36" rx="4" fill="#fffdf9"/><circle cx="34" cy="52" r="5.5" fill="#bf4433"/><rect x="51" y="34" width="29" height="17" rx="4" fill="#e3b95c"/><rect x="51" y="53" width="13" height="17" rx="4" fill="#7d9a6a"/><rect x="66" y="53" width="14" height="17" rx="4" fill="#d08a4f"/></svg>',
+		'<svg viewBox="0 0 100 100"><path d="M15 48a35 35 0 0 0 70 0z" fill="#5b7a52"/><path d="M15 48a35 35 0 0 1 70 0" fill="#f7f4ea"/><path d="M30 44c4-8 12-12 20-12s16 4 20 12" fill="none" stroke="#8fae76" stroke-width="5" stroke-linecap="round"/><circle cx="34" cy="42" r="5" fill="#bf4433"/><circle cx="62" cy="39" r="5" fill="#bf4433"/></svg>',
+		'<svg viewBox="0 0 100 100"><path d="M14 46a36 36 0 0 0 72 0z" fill="#b6423a"/><ellipse cx="50" cy="46" rx="34" ry="8" fill="#f5e9c8"/><path d="M26 44q6-6 12 0M44 42q6-6 12 0M62 44q6-6 12 0" fill="none" stroke="#dfc383" stroke-width="3" stroke-linecap="round"/><circle cx="58" cy="40" r="7" fill="#fffdf9"/><path d="M55 40a3 3 0 0 0 6 0a3 3 0 0 0-6 0" fill="none" stroke="#c9737f" stroke-width="2"/></svg>',
+		'<svg viewBox="0 0 100 100"><ellipse cx="50" cy="58" rx="38" ry="16" fill="#fffdf9"/><ellipse cx="50" cy="55" rx="38" ry="16" fill="#efe9da"/><path d="M32 50c-2-8 4-14 11-13c1-6 12-7 15-1c7-3 14 3 12 10c4 4 1 11-5 12c-9 3-26 3-30-1c-4 0-5-4-3-7z" fill="#cf8636"/><path d="M70 62c6-2 10 1 10 5" fill="none" stroke="#e3c94b" stroke-width="5" stroke-linecap="round"/></svg>',
+		'<svg viewBox="0 0 100 100"><path d="M18 52a32 32 0 0 0 64 0z" fill="#46608c"/><path d="M24 52c0-14 10-22 26-22s26 8 26 22" fill="#fffdf9"/><path d="M40 22c-3-5 3-7 0-12M52 20c-3-5 3-7 0-12M64 22c-3-5 3-7 0-12" fill="none" stroke="#cabfa4" stroke-width="3" stroke-linecap="round"/></svg>',
+	);
+	return $svgs[ $i % 6 ];
+}
+
+/** 記事カード1枚を出力 */
+function uchimenu_card( $i = 0 ) {
+	$cats = get_the_category();
+	$cat  = $cats ? $cats[0] : null;
+	?>
+	<a class="card rv" href="<?php the_permalink(); ?>">
+		<div class="thumb t<?php echo ( $i % 6 ) + 1; ?>">
+			<?php if ( has_post_thumbnail() ) { the_post_thumbnail( 'medium_large' ); }
+			else { echo uchimenu_fallback_thumb( $i ); } ?>
+		</div>
+		<div class="card-b">
+			<?php if ( $cat ) : ?>
+				<span class="tag <?php echo esc_attr( uchimenu_cat_class( $cat->name ) ); ?>"><?php echo esc_html( $cat->name ); ?></span>
+			<?php endif; ?>
+			<h3><?php the_title(); ?></h3>
+			<div class="meta"><span><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></span></div>
+		</div>
+	</a>
+	<?php
+}
+
+/**
+ * ショートコード [gacha_cta]
+ * 例: [gacha_cta kcal="600" dishes="3" label="600kcal・3品でガチャを回す"]
+ */
+function uchimenu_gacha_cta_sc( $atts ) {
+	$a = shortcode_atts( array(
+		'kcal'   => '',
+		'dishes' => '',
+		'mode'   => 'diet',
+		'page'   => '',
+		'label'  => '🎲 今夜の献立ガチャを回す',
+		'note'   => '登録不要・無料・10秒で決まります',
+	), $atts );
+	$args = array();
+	if ( $a['kcal'] )   { $args['mode'] = $a['mode']; $args['kcal'] = $a['kcal']; }
+	elseif ( $a['mode'] !== 'diet' ) { $args['mode'] = $a['mode']; }
+	if ( $a['dishes'] ) $args['dishes'] = $a['dishes'];
+	if ( $a['page'] )   $args['page'] = $a['page'];
+	$url = uchimenu_app_url( $args );
+	return '<div class="um-cta-box"><span class="lbl">▼ 読むより回すのが早いです</span>'
+		. '<a class="um-cta-btn" href="' . $url . '">' . esc_html( $a['label'] ) . '</a>'
+		. '<div class="um-cta-note">' . esc_html( $a['note'] ) . '</div></div>';
+}
+add_shortcode( 'gacha_cta', 'uchimenu_gacha_cta_sc' );
+
+/** 記事本文の末尾にアプリ誘導を自動挿入 */
+function uchimenu_after_content( $content ) {
+	if ( is_singular( 'post' ) && in_the_loop() && is_main_query() ) {
+		$content .= do_shortcode( '[gacha_cta label="🎲 無料で献立ガチャを回してみる"]' );
+	}
+	return $content;
+}
+add_filter( 'the_content', 'uchimenu_after_content' );
+
+/** 抜粋 */
+add_filter( 'excerpt_length', function () { return 60; } );
+add_filter( 'excerpt_more', function () { return '…'; } );

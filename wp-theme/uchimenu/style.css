@@ -15,9 +15,10 @@ Text Domain: uchimenu
   --disp:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;
   --num:'Archivo Black',-apple-system,sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+/* overflow-x:clip … 横スクロール（iOSの自動ズームアウト）を防ぐ。hidden と違い sticky ヘッダーを壊さない */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:clip}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
-  background:var(--paper);color:var(--ink);line-height:1.85;overflow-x:hidden;font-size:15.5px;
+  background:var(--paper);color:var(--ink);line-height:1.85;overflow-x:clip;max-width:100%;font-size:15.5px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .48 0 0 0 0 .36 0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
 img{max-width:100%;height:auto}
 a{color:var(--shu)}
@@ -27,7 +28,8 @@ a{color:var(--shu)}
 /* ---------- header ---------- */
 .site-head{background:rgba(246,241,230,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);
   position:sticky;top:0;z-index:20}
-.head-in{display:flex;align-items:center;gap:11px;padding:13px 0}
+/* 左右22pxは .wrap と揃える（shorthand で .wrap の padding を打ち消さないこと） */
+.head-in{display:flex;align-items:center;gap:11px;padding:13px 22px}
 .crest{width:30px;height:30px;background:var(--shu);color:#fffdf9;display:flex;align-items:center;
   justify-content:center;font-family:var(--disp);font-size:15px;font-weight:700;border-radius:7px;
   transform:rotate(-4deg);box-shadow:1.5px 1.5px 0 rgba(43,38,32,.15);flex-shrink:0}
@@ -39,7 +41,7 @@ a{color:var(--shu)}
 .head-cta:hover{transform:scale(1.05);color:#fffdf9}
 
 /* ---------- hero ---------- */
-.hero{position:relative;padding:66px 0 42px}
+.hero{position:relative;padding:66px 22px 42px}
 .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.4;pointer-events:none;z-index:-1}
 .blob.a{width:430px;height:430px;background:radial-gradient(circle,#e3b04b,transparent 65%);
   top:-130px;right:-90px;animation:um-drift 15s ease-in-out infinite alternate}
@@ -102,7 +104,7 @@ a{color:var(--shu)}
 .marq b{color:var(--shu);margin:0 6px}
 
 /* ---------- lunch / phone ---------- */
-.lunch{padding:70px 0 10px}
+.lunch{padding:70px 22px 10px}
 .lunch-grid{display:grid;grid-template-columns:1fr .9fr;gap:50px;align-items:center}
 .kick{font-family:var(--num);font-size:10px;letter-spacing:.32em;color:var(--yama)}
 .lunch h2{font-family:var(--disp);font-size:30px;font-weight:700;line-height:1.5;margin:14px 0 12px;text-wrap:balance}
@@ -241,8 +243,13 @@ a.tag{text-decoration:none}
   .rv{opacity:1;transform:none}.p-bar i{width:57%!important}}
 @media(max-width:780px){.hero-grid,.lunch-grid{grid-template-columns:1fr}
   .hero h1{font-size:30px}.lunch h2{font-size:24px}
-  .appbn{flex-direction:column;text-align:center}.appbn a.go{margin:0}
-  .article-head h1{font-size:24px}}
+  .appbn{flex-direction:column;text-align:center;padding:32px 22px}.appbn a.go{margin:0}
+  .article-head h1{font-size:24px}
+  /* 装飾ブロブは画面幅からはみ出さない位置・サイズにする（横スクロール防止） */
+  .blob.a{width:280px;height:280px;right:0;top:-70px}
+  .blob.b{width:260px;height:260px;left:0;top:180px}
+  .site-tagline{display:none}
+  .head-cta{padding:9px 15px;font-size:12px}}
 
 /* screen-reader-text (WP必須) */
 .screen-reader-text{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(1px,1px,1px,1px)}

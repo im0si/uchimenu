@@ -35,8 +35,9 @@ a{color:var(--shu)}
   transform:rotate(-4deg);box-shadow:1.5px 1.5px 0 rgba(43,38,32,.15);flex-shrink:0}
 .site-logo{font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:.05em;
   color:var(--ink);text-decoration:none;display:inline-flex;align-items:baseline;gap:7px}
+/* MAGAZINE は欧文なので字面が左に張り出す。「う」の字面と頭を揃えるため少し右へ寄せる */
 .site-logo .mag{font-family:var(--num);font-size:10px;letter-spacing:.2em;color:var(--shu);
-  text-transform:uppercase;transform:translateY(-1px)}
+  text-transform:uppercase;transform:translateY(-1px);padding-left:4px}
 .site-tagline{font-size:10px;color:var(--sub);font-weight:700;margin-left:10px;letter-spacing:.14em}
 .head-cta{margin-left:auto;background:var(--ink);color:#fffdf9;border:none;border-radius:999px;
   padding:10px 20px;font-size:13px;font-weight:800;text-decoration:none;transition:transform .2s;white-space:nowrap}
@@ -316,9 +317,9 @@ a.tag{text-decoration:none}
   .blob.b{width:260px;height:260px;left:0;top:180px}
   .site-tagline{display:none}
   .head-cta{padding:9px 15px;font-size:12px}
-  /* ロゴは折り返さず、Magazine を下に小さく重ねる */
-  .site-logo{flex-direction:column;align-items:flex-start;gap:0;white-space:nowrap;font-size:18px;line-height:1.15}
-  .site-logo .mag{font-size:8.5px;transform:none;letter-spacing:.24em}}
+  /* ロゴは折り返さず、Magazine を下に小さく置く（行間をあけ、字面の頭を「う」に揃える） */
+  .site-logo{flex-direction:column;align-items:flex-start;gap:0;white-space:nowrap;font-size:18px;line-height:1.25}
+  .site-logo .mag{font-size:9px;transform:none;letter-spacing:.26em;margin-top:4px;padding-left:3px}}
 
 /* screen-reader-text (WP必須) */
 .screen-reader-text{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(1px,1px,1px,1px)}

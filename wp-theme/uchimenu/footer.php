@@ -14,7 +14,6 @@
 			<div class="foot-h">献立アプリ「<?php echo esc_html( UCHIMENU_APP_NAME ); ?>」</div>
 			<p>今夜の献立を10秒で。登録不要・無料。記事とは別のアプリとして使えます。</p>
 			<div class="foot-links">
-				<a href="<?php echo uchimenu_app_url(); ?>">アプリを開く</a>
 				<a href="<?php echo esc_url( home_url( '/#install' ) ); ?>">ホーム画面に追加する</a>
 			</div>
 		</div>

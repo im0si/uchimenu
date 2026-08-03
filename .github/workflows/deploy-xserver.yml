@@ -46,6 +46,7 @@ jobs:
              shot-gacha.png shot-lunch.png shot-week.png .htaccess out/
 
       - name: Upload via FTPS (lftp, 5 retries)
+        timeout-minutes: 8
         if: steps.check.outputs.configured == 'true'
         env:
           H: ${{ secrets.XSERVER_FTP_HOST }}
@@ -54,10 +55,10 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
           for i in 1 2 3 4 5; do
-            if lftp -u "$U","$P" -e "set ftp:ssl-force true; set ftp:passive-mode true; set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 8; set net:connection-limit 1; set mirror:parallel-transfer-count 1;               mirror -R --verbose out/ /run-digital.com/public_html/uchimenu.run-digital.com/app/;               put -O /run-digital.com/public_html/uchimenu.run-digital.com/app/ out/.htaccess;               bye" "$H"; then
+            if lftp -u "$U","$P" -e "set ftp:ssl-force true; set ftp:passive-mode true; set net:timeout 15; set net:max-retries 1; set net:reconnect-interval-base 5; set net:connection-limit 1; set mirror:parallel-transfer-count 1;               mirror -R --verbose out/ /run-digital.com/public_html/uchimenu.run-digital.com/app/;               put -O /run-digital.com/public_html/uchimenu.run-digital.com/app/ out/.htaccess;               bye" "$H"; then
               echo "upload ok"; exit 0
             fi
-            echo "attempt $i failed, waiting..."; sleep $((i*20))
+            echo "attempt $i failed, waiting..."; sleep 15
           done
           echo "upload failed after 5 attempts"; exit 1
 

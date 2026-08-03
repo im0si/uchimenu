@@ -47,7 +47,7 @@
     display:flex;align-items:center;justify-content:center;color:#fffdf9;font-size:13px;font-weight:800;
     transform:rotate(-4deg);box-shadow:1.5px 1.5px 0 rgba(43,38,32,.15)}
   .logo-dot::before{content:"う"}
-  header h1{font-size:18px;font-weight:800;letter-spacing:.5px}
+  header h1{font-size:18px;font-weight:800;letter-spacing:.5px;white-space:nowrap}
   .helpbtn{margin-left:auto;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);
     background:var(--card);color:var(--sub);font-size:15px;font-weight:800}
   /* ---------- main（ここだけスクロール） ---------- */
@@ -191,13 +191,13 @@
   .instnote{background:#faf3f4;border:1px dashed #e0b9c0;border-radius:12px;padding:11px 13px;
     font-size:12px;color:var(--sakura);line-height:1.7;margin-top:12px}
   .headinst{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--ink);
-    border-radius:999px;padding:6px 12px;font-size:11.5px;font-weight:700;white-space:nowrap}
-  /* 記事メディア（うちめにゅー Magazine）への導線 */
-  .magcard{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
-  .magkick{display:block;font-family:var(--disp);font-size:9.5px;font-weight:700;letter-spacing:.2em;color:var(--shu);margin-bottom:5px}
-  .magcard b{font-family:var(--disp);font-size:15px;display:block}
-  .magnote{display:block;font-size:12px;color:var(--sub);line-height:1.7;margin-top:4px}
-  .magarw{font-size:18px;color:var(--sub);flex-shrink:0}
+    border-radius:999px;padding:6px 12px;font-size:11.5px;font-weight:700;white-space:nowrap;flex-shrink:0}
+  /* 狭い端末ではラベルを省いてアイコンだけにする（ロゴの折り返しを防ぐ） */
+  @media(max-width:379px){.headinst .lb{display:none}.headinst{padding:6px 10px;font-size:13px}}
+  /* 記事メディア（うちめにゅー Magazine）へ飛ぶアイコンボタン */
+  .magbtn{margin-left:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;padding:0}
+  .magbtn svg{width:18px;height:18px;stroke:var(--sub);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .magbtn:active svg{stroke:var(--shu)}
   /* iOS用: 画面下の共有ボタンを指す矢印（Safariの共有ボタンは下部中央にある） */
   #iosPtr{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom));z-index:70;
     display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
@@ -249,7 +249,9 @@
 <body>
 <header>
   <span class="logo-dot"></span><h1>うちめにゅー</h1>
-  <button class="headinst hidden" id="headInst">⤓ アプリにする</button>
+  <button class="headinst hidden" id="headInst">⤓<span class="lb"> アプリにする</span></button>
+  <a class="helpbtn magbtn hidden" id="magBtn" href="../" target="_blank" rel="noopener"
+     aria-label="うちめにゅー Magazine の記事を読む" title="記事を読む"><svg viewBox="0 0 24 24"><path d="M12 7.2C10.4 5.6 7.9 5 4.8 5.3v12.2c3.1-.3 5.6.3 7.2 1.9 1.6-1.6 4.1-2.2 7.2-1.9V5.3c-3.1-.3-5.6.3-7.2 1.9z"/><path d="M12 7.2v12.2"/></svg></a>
   <button class="helpbtn" id="helpBtn" aria-label="使い方" style="margin-left:8px">?</button>
 </header>
 
@@ -444,15 +446,6 @@
     </div>
     <button class="btn2 fill" id="instCardBtn" style="width:100%;margin-top:12px">追加のしかたを見る</button>
   </div>
-  <!-- 記事メディアへの導線（本番の /app/ 配下でのみ表示。相対パスで親サイトへ） -->
-  <a class="card magcard hidden" id="magCard" href="../" target="_blank" rel="noopener">
-    <div>
-      <span class="magkick">UCHIMENU MAGAZINE</span>
-      <b>献立のコツを読む</b>
-      <span class="magnote">献立の決め方・カロリー・作りおきなど、毎日のごはんが軽くなる記事を配信中</span>
-    </div>
-    <span class="magarw">→</span>
-  </a>
 </div>
 </main>
 
@@ -1629,7 +1622,7 @@ if(!standalone){$("headInst").classList.remove("hidden");$("instCard").classList
 
 /* 記事メディアへの導線は、本番（/app/ 配下）に置かれているときだけ出す。
    GitHub Pages などアプリ単体で公開している場所では親サイトが無いので出さない。 */
-if(/\/app\/$/.test(location.pathname.replace(/[^/]*$/,"")))$("magCard").classList.remove("hidden");
+if(/\/app\/$/.test(location.pathname.replace(/[^/]*$/,"")))$("magBtn").classList.remove("hidden");
 
 /* バナーの出し方のルール（web.dev の推奨に沿う）
    ・押しつけない: 閉じたら14日休む。3回閉じたら二度と出さない

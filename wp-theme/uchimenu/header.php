@@ -9,7 +9,7 @@
 <?php wp_body_open(); ?>
 <header class="site-head">
 	<div class="wrap head-in">
-		<span class="crest">献</span>
+		<img class="crest" src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png?v=' . uchimenu_asset_ver( 'app-icon.png' ) ); ?>" alt="" width="30" height="30">
 		<a class="site-logo" href="<?php echo esc_url( home_url( '/' ) ); ?>">うちめにゅー<span class="mag">Magazine</span></a>
 		<span class="site-tagline"><?php bloginfo( 'description' ); ?></span>
 		<a class="head-cta" href="<?php echo uchimenu_app_url(); ?>">🎲 アプリを開く</a>

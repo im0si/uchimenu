@@ -1,7 +1,7 @@
 <footer class="site-foot">
 	<div class="wrap foot-cols">
 		<div class="foot-col">
-			<div class="foot-h"><span class="crest">献</span><?php echo esc_html( UCHIMENU_SITE_NAME ); ?></div>
+			<div class="foot-h"><img class="crest" src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png?v=' . uchimenu_asset_ver( 'app-icon.png' ) ); ?>" alt="" width="22" height="22"><?php echo esc_html( UCHIMENU_SITE_NAME ); ?></div>
 			<p>献立の決め方・カロリー・作りおきなど、毎日のごはんを軽くする記事をお届けします。</p>
 			<div class="foot-links">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>">ホーム</a>

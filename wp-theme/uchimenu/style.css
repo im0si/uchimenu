@@ -30,9 +30,8 @@ a{color:var(--shu)}
   position:sticky;top:0;z-index:20}
 /* 左右22pxは .wrap と揃える（shorthand で .wrap の padding を打ち消さないこと） */
 .head-in{display:flex;align-items:center;gap:11px;padding:13px 22px}
-.crest{width:30px;height:30px;background:var(--shu);color:#fffdf9;display:flex;align-items:center;
-  justify-content:center;font-family:var(--disp);font-size:15px;font-weight:700;border-radius:7px;
-  transform:rotate(-4deg);box-shadow:1.5px 1.5px 0 rgba(43,38,32,.15);flex-shrink:0}
+.crest{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:block;
+  box-shadow:0 2px 6px rgba(43,38,32,.16)}
 .site-logo{font-family:var(--disp);font-size:20px;font-weight:700;letter-spacing:.05em;
   color:var(--ink);text-decoration:none;display:inline-flex;align-items:baseline;gap:7px}
 /* MAGAZINE は欧文なので字面が左に張り出す。「う」の字面と頭を揃えるため少し右へ寄せる */
@@ -291,7 +290,7 @@ a.tag{text-decoration:none}
 /* ---------- footer ---------- */
 .site-foot{border-top:1px solid var(--line);background:var(--card);padding:34px 0 24px;
   font-size:12px;color:var(--sub);margin-top:40px}
-.site-foot .crest{display:inline-flex;width:22px;height:22px;font-size:11px;margin-right:8px}
+.site-foot .crest{width:22px;height:22px;border-radius:6px;margin-right:8px}
 .foot-cols{display:grid;grid-template-columns:1.15fr .85fr;gap:34px;text-align:left}
 .foot-h{font-family:var(--disp);font-size:15px;font-weight:700;color:var(--ink);
   display:flex;align-items:center;margin-bottom:8px}

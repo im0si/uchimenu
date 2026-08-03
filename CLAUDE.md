@@ -25,7 +25,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 
 ## 名称の使い分け
 
-- **Webメディア（uchimenu.run-digital.com）= 「うちめにゅー Magazine」**。テーマ定数 `UCHIMENU_SITE_NAME` で管理し、ヘッダーのロゴ・フッター・ブラウザのタイトル（`document_title_parts` フィルタ）に反映する。WP管理画面の「サイトのタイトル」設定には依存させない。
+- **Webメディア（uchimenu.run-digital.com）= 「うちめにゅー Magazine」**。ヘッダー・フッターのロゴマークとファビコンはアプリと同じ茶碗アイコン（`wp-theme/uchimenu/app-icon.png` / `app-icon-512.png`）を使う。ファビコンは `uchimenu_favicon()` で自前出力し、WP標準の `wp_site_icon` は止めてある（管理画面の「サイトアイコン」設定に依存させない）。テーマ定数 `UCHIMENU_SITE_NAME` で管理し、ヘッダーのロゴ・フッター・ブラウザのタイトル（`document_title_parts` フィルタ）に反映する。WP管理画面の「サイトのタイトル」設定には依存させない。
 - **アプリ（/app/）= 「うちめにゅー」**。テーマ側で参照するときは定数 `UCHIMENU_APP_NAME`。
 - サイトのヘッダーCTAは「アプリを開く」。記事内CTAはガチャの文言のままでよい。
 - **このサイト（トップ・記事・カテゴリ・固定ページ）はすべて Magazine の中**。共通ヘッダー（ロゴ＋カテゴリナビ `uchimenu_nav()`）とパンくず `uchimenu_breadcrumb()`（うちめにゅー Magazine › カテゴリ › 記事）を全ページで出す。**Magazine の外は `/app/` のアプリだけ**。

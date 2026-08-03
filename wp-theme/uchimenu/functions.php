@@ -111,6 +111,21 @@ function uchimenu_breadcrumb() {
 	echo '</div></div>';
 }
 
+/**
+ * ファビコン（タブのアイコン）をうちめにゅーのアイコンにする。
+ * WP管理画面の「サイトアイコン」設定に依存させないため、WP標準の出力を止めて自前で出す。
+ */
+remove_action( 'wp_head', 'wp_site_icon', 99 );
+function uchimenu_favicon() {
+	$dir = get_template_directory_uri();
+	$v   = uchimenu_asset_ver( 'app-icon.png' );
+	echo '<link rel="icon" type="image/png" sizes="192x192" href="' . esc_url( "$dir/app-icon.png?v=$v" ) . '">' . "\n";
+	echo '<link rel="icon" type="image/png" sizes="512x512" href="' . esc_url( "$dir/app-icon-512.png?v=$v" ) . '">' . "\n";
+	echo '<link rel="apple-touch-icon" href="' . esc_url( "$dir/app-icon.png?v=$v" ) . '">' . "\n";
+	echo '<meta name="theme-color" content="#f6f1e6">' . "\n";
+}
+add_action( 'wp_head', 'uchimenu_favicon', 4 );
+
 /** OGP（共有時の表示名も「うちめにゅー Magazine」に揃える） */
 function uchimenu_ogp() {
 	$title = is_front_page() ? UCHIMENU_SITE_NAME : wp_get_document_title();

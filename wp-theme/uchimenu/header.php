@@ -10,8 +10,8 @@
 <header class="site-head">
 	<div class="wrap head-in">
 		<span class="crest">献</span>
-		<a class="site-logo" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php bloginfo( 'name' ); ?></a>
+		<a class="site-logo" href="<?php echo esc_url( home_url( '/' ) ); ?>">うちめにゅー<span class="mag">Magazine</span></a>
 		<span class="site-tagline"><?php bloginfo( 'description' ); ?></span>
-		<a class="head-cta" href="<?php echo uchimenu_app_url(); ?>">🎲 ガチャを回す</a>
+		<a class="head-cta" href="<?php echo uchimenu_app_url(); ?>">🎲 アプリを開く</a>
 	</div>
 </header>

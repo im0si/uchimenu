@@ -7,6 +7,19 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 define( 'UCHIMENU_APP_PATH', '/app/' ); // アプリの設置パス
 
+/* 名称の使い分け（WPの「サイトのタイトル」設定に依存させない）
+   ・Webメディア（このサイト） = うちめにゅー Magazine
+   ・アプリ（/app/）           = うちめにゅー                     */
+define( 'UCHIMENU_SITE_NAME', 'うちめにゅー Magazine' );
+define( 'UCHIMENU_APP_NAME', 'うちめにゅー' );
+
+/** ブラウザのタブ・検索結果のタイトルもサイト名に合わせる */
+function uchimenu_document_title( $parts ) {
+	$parts['site'] = UCHIMENU_SITE_NAME;
+	return $parts;
+}
+add_filter( 'document_title_parts', 'uchimenu_document_title' );
+
 function uchimenu_setup() {
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'post-thumbnails' );

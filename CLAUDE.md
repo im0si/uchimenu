@@ -23,6 +23,12 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 
 ビルド工程・パッケージマネージャ・テストは存在しない。ブラウザで `index.html` を開けば動く。
 
+## 名称の使い分け
+
+- **Webメディア（uchimenu.run-digital.com）= 「うちめにゅー Magazine」**。テーマ定数 `UCHIMENU_SITE_NAME` で管理し、ヘッダーのロゴ・フッター・ブラウザのタイトル（`document_title_parts` フィルタ）に反映する。WP管理画面の「サイトのタイトル」設定には依存させない。
+- **アプリ（/app/）= 「うちめにゅー」**。テーマ側で参照するときは定数 `UCHIMENU_APP_NAME`。
+- サイトのヘッダーCTAは「アプリを開く」。記事内CTAはガチャの文言のままでよい。
+
 ## 事業方針（収益）
 
 - 基本無料のWebサービス。将来の収益は**月額サブスクリプション（フリーミアム）**で立てる方針（Phase 2以降で Supabase＋Stripe を導入予定。その際「サーバー費用ゼロ」ルールは「固定費ゼロ・売上連動費のみ可」に改訂する）。
@@ -58,10 +64,12 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - カテゴリ色は 主菜=朱 `--shu` ／副菜=抹茶 `--matcha` ／汁物=藍 `--ai` ／主食=山吹 `--yama` ／一皿=桜 `--sakura`。Canvas（共有カード）内の `CATC` も同じ値に揃える。
 - 既存の CSS 変数（`--bg` `--card` `--ink` `--sub` `--line` `--pink`(朱の別名) `--shu` `--yama` `--matcha` `--ai` `--sakura` `--grad` `--shadow` `--r`）を使う。色を追加するときは wp-theme/uchimenu/style.css のパレットから選ぶ。
 
-### 6. 日本語フォントはシステムフォント
-- `-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif` を維持する。
-- Webフォント（Google Fonts 等）を読み込まない（ルール1・外部通信禁止にも抵触する）。
-- おしながき部分の明朝体（`Hiragino Mincho ProN` 等）もシステムフォント指定のままにする。
+### 6. フォント（本文はシステム、見出しは埋め込みサブセット）
+- **本文はシステムフォント**を維持する（`-apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif`）。WPサイトも本文はシステムフォントなので見え方が揃う。
+- **見出し・ボタン・タブ・カテゴリ札は `--disp`（`UM Round`＝Zen Maru Gothic）**、**統計や合計の数字は `--num`（`UM Num`＝Archivo Black）**。どちらも「使う文字だけ」に絞った woff2 を data URI で `index.html` に直接埋め込んでいる（結合済み・計約53KB）。**外部から読み込んではいけない**（ルール1）。
+- 料理名など可変のテキストには表示用フォントを当てない（サブセットに無い文字が混ざり、書体がバラつくため）。`.pill` や `.slot .name` は本文フォントのまま。
+- 見出し文言を増やしてサブセットに無い文字が出た場合は、フォントを作り直して差し替える。手順はリポジトリの `tools-subset-fonts.py` に入れてある（`npm i @fontsource/zen-maru-gothic @fontsource/archivo-black` と `pip install fonttools brotli` の後に実行。チャンクごとに subset → 1本に merge → woff2 → base64）。安易に外部フォントへ戻さない。
+- おしながき部分の明朝体（`Hiragino Mincho ProN` 等）はシステムフォント指定のままにする。
 
 ## index.html の構成（要約）
 

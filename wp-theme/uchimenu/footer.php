@@ -1,8 +1,8 @@
 <footer class="site-foot">
-	<span class="crest">献</span><?php bloginfo( 'name' ); ?> ── 今夜の献立、10秒で決まる。
+	<span class="crest">献</span><?php echo esc_html( UCHIMENU_SITE_NAME ); ?> ── 今夜の献立、10秒で決まる。
 	<div class="foot-links">
 		<a href="<?php echo esc_url( home_url( '/#install' ) ); ?>">アプリとして使う（ホーム画面に追加）</a>
-		<a href="<?php echo uchimenu_app_url(); ?>">献立ガチャを開く</a>
+		<a href="<?php echo uchimenu_app_url(); ?>">献立アプリ「<?php echo esc_html( UCHIMENU_APP_NAME ); ?>」を開く</a>
 	</div>
 </footer>
 <!-- 画面下の小さなアプリ設置バー（スマホのみ・スクロール35%以降・閉じたら30日出さない） -->

@@ -355,17 +355,7 @@
   </div>
 
   <div class="card">
-    <h2>にがて・除外したい食材</h2>
-    <div class="note" style="margin-top:0">登録した言葉を含む料理・材料はガチャに出なくなります（例: なす、パクチー、さば）</div>
-    <div class="formrow" style="margin:10px 0 4px">
-      <input type="text" id="ngIn" placeholder="食材や料理名を入力">
-      <button class="btn2 fill" style="width:96px;flex:none" id="ngBtn">追加</button>
-    </div>
-    <div class="quick" id="ngListBox"></div>
-  </div>
-
-  <div class="card">
-    <details id="formBox">
+    <details id="formBox" open>
       <summary>リストにない料理を自分で登録する</summary>
       <div style="margin-top:12px">
         <label class="photolabel" id="photoLabel">📷 写真を追加（あとからでもOK）<input type="file" accept="image/*" id="photoInput" class="hidden"></label>
@@ -620,21 +610,12 @@ function pick(pool,exclude){
   for(let i=0;i<list.length;i++){r-=w[i];if(r<=0)return list[i]}
   return list[list.length-1];
 }
-let ngList=store.get("ng",[]);
-function isNG(d){
-  return ngList.some(w=>d.name.includes(w)||(typeof ING!=="undefined"&&(ING[d.name]||[]).some(g=>g.includes(w))));
-}
 function poolOf(cat){
-  let pool;
   if(source==="mine"){
     const mine=myMenu.filter(d=>d.cat===cat);
-    pool=mine.length>=2?mine:[...mine,...PRESET.filter(d=>d.cat===cat)];
-  }else{
-    pool=PRESET.filter(d=>d.cat===cat);
+    return mine.length>=2?mine:[...mine,...PRESET.filter(d=>d.cat===cat)];
   }
-  /* 除外設定を適用。絞りすぎてプールが空になるときは除外を無視して動作を守る */
-  const filtered=pool.filter(d=>!isNG(d));
-  return filtered.length?filtered:pool;
+  return PRESET.filter(d=>d.cat===cat);
 }
 function drawMenu(){
   if(mode==="quick")return [pick(poolOf("一皿"),[])];
@@ -906,25 +887,6 @@ $("addBtn").onclick=()=>{
   setPhotoLabel("📷 写真を追加（あとからでもOK）");
   refreshAll();
   toast("「"+name+"」を追加しました");
-};
-/* 苦手・除外リスト */
-function renderNg(){
-  const box=$("ngListBox");box.innerHTML="";
-  if(!ngList.length){box.innerHTML='<span class="note" style="margin-top:0">まだ登録がありません</span>';return}
-  ngList.forEach(w=>{
-    const b=document.createElement("button");
-    b.className="pill on";b.textContent="✕ "+w;
-    b.onclick=()=>{ngList=ngList.filter(x=>x!==w);store.set("ng",ngList);renderNg()};
-    box.appendChild(b);
-  });
-}
-$("ngBtn").onclick=()=>{
-  const w=$("ngIn").value.trim();
-  if(!w){toast("食材や料理名を入力してください");return}
-  if(w.length>12){toast("12文字以内で入力してください");return}
-  if(!ngList.includes(w)){ngList.push(w);store.set("ng",ngList)}
-  $("ngIn").value="";renderNg();
-  toast("「"+w+"」を含む料理はガチャに出なくなります");
 };
 function addPreset(p){
   myMenu.push({id:"m"+Date.now()+Math.random().toString(36).slice(2,6),name:p.name,cat:p.cat,kcal:p.kcal,min:p.min,photo:null,fav:false});
@@ -1464,7 +1426,7 @@ function renderWeight(){
 }
 
 /* ============ バックアップ・復元 ============ */
-const BK_KEYS=["menu","hist","recent","family","onboarded","profile","lunchlog","week","shop","weight","ng"];
+const BK_KEYS=["menu","hist","recent","family","onboarded","profile","lunchlog","week","shop","weight"];
 $("expBtn").onclick=()=>{
   const data={app:"uchimenu",ver:1,ts:Date.now()};
   BK_KEYS.forEach(k=>{const v=store.get(k,null);if(v!==null)data[k]=v});
@@ -1678,7 +1640,7 @@ $("pwaNo").onclick=()=>{
 /* 記事などから ?install=1 で来た人にはすぐ手順を出す */
 if(new URLSearchParams(location.search).get("install")==="1"&&!standalone)openInst();
 
-refreshAll();renderHist();renderWeek();renderWeight();renderNg();
+refreshAll();renderHist();renderWeek();renderWeight();
 </script>
 </body>
 </html>

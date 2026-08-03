@@ -1,5 +1,5 @@
 /* うちめにゅー Service Worker v1 — オフラインでも開けるようにするキャッシュ */
-const CACHE = "uchimenu-v1";
+const CACHE = "uchimenu-v2";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

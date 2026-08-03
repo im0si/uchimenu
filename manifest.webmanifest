@@ -1,15 +1,38 @@
 {
-  "name": "うちめにゅー",
+  "id": "./",
+  "name": "うちめにゅー — 今夜の献立ガチャ",
   "short_name": "うちめにゅー",
-  "description": "自分の手料理でつくる、自分だけのメニュー表。今夜の献立はガチャで決めよう。",
+  "description": "今夜の献立を10秒で。185品の家庭料理から、目標カロリーに合う夕食をガチャで決めるアプリ。ランチの記録から「今夜あと何kcal食べられるか」も自動計算します。",
   "lang": "ja",
+  "dir": "ltr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#f6f1e6",
+  "theme_color": "#f6f1e6",
+  "categories": ["food", "lifestyle", "health"],
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "shot-gacha.png", "sizes": "414x896", "type": "image/png", "form_factor": "narrow",
+      "label": "ボタンひとつで今夜の献立が決まります" },
+    { "src": "shot-lunch.png", "sizes": "414x896", "type": "image/png", "form_factor": "narrow",
+      "label": "ランチを記録すると、今夜使えるカロリーが出ます" },
+    { "src": "shot-week.png", "sizes": "414x896", "type": "image/png", "form_factor": "narrow",
+      "label": "1週間ぶんの献立と買い物リストもまとめて作れます" }
+  ],
+  "shortcuts": [
+    { "name": "献立ガチャを回す", "short_name": "ガチャ", "url": "./index.html?page=gacha",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "ランチを記録する", "short_name": "ランチ", "url": "./index.html?page=lunch",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "おしながきを見る", "short_name": "おしながき", "url": "./index.html?page=oshi",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ],
+  "prefer_related_applications": false
 }

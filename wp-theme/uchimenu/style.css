@@ -220,6 +220,23 @@ a.tag{text-decoration:none}
 .um-cta-btn:hover{transform:translateY(-2px);color:#fffdf9}
 .um-cta-note{font-size:11px;color:var(--sub);margin-top:10px}
 
+/* ---------- アプリ化（ホーム画面に追加）の案内 ---------- */
+.um-install{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:30px;margin:44px 0;text-align:center;box-shadow:0 1px 3px rgba(43,38,32,.06)}
+.um-install-h{display:flex;gap:16px;align-items:center;text-align:left;margin-bottom:22px}
+.um-install-h img{border-radius:16px;flex-shrink:0;box-shadow:0 6px 16px rgba(43,38,32,.18)}
+.um-install-h b{font-family:var(--disp);font-size:19px;display:block;line-height:1.5}
+.um-install-h span{font-size:13.5px;color:var(--sub);display:block;margin-top:6px;line-height:1.8}
+.um-install-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:left;margin-bottom:22px}
+.um-install-col{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.um-install-col .h{font-weight:800;font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.um-install-col .h .ic{width:9px;height:9px;border-radius:50%;background:var(--grad);flex-shrink:0}
+.um-install-col ol{padding-left:1.3em;font-size:13.5px;color:var(--sub)}
+.um-install-col li{margin-top:.45em;line-height:1.7}
+.um-install-col li b{color:var(--shu)}
+@media(max-width:780px){.um-install{padding:24px 18px}.um-install-cols{grid-template-columns:1fr}
+  .um-install-h{flex-direction:column;text-align:center;gap:12px}.um-install-h b{font-size:17px}}
+
 /* ---------- archive ---------- */
 .archive-head{padding:48px 0 6px}
 .archive-head .kick{color:var(--shu)}
@@ -235,6 +252,9 @@ a.tag{text-decoration:none}
 .site-foot{border-top:1px solid var(--line);background:var(--card);padding:30px 0;text-align:center;
   font-size:12px;color:var(--sub);margin-top:40px}
 .site-foot .crest{display:inline-flex;width:22px;height:22px;font-size:11px;vertical-align:-6px;margin-right:8px}
+.foot-links{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-weight:700}
+.foot-links a{text-decoration:none}
+.foot-links a:hover{text-decoration:underline}
 
 /* ---------- reveal ---------- */
 .rv{opacity:0;transform:translateY(18px)}

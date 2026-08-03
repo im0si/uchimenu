@@ -11,10 +11,11 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `index.html` … アプリ本体（HTML/CSS/JS をすべて内包）
 - `sw.js` … Service Worker（オフラインキャッシュ、ネット優先・失敗時キャッシュ）
 - `manifest.webmanifest` … PWA マニフェスト（`start_url` / `scope` は `./`）
-- `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類
+- `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類（朱→山吹グラデに白い茶碗＋湯気。`scratchpad` の SVG から生成。デザイン変更時は3サイズと `wp-theme/uchimenu/app-icon.png` を必ず揃える）
+- `shot-gacha.png` / `shot-lunch.png` / `shot-week.png` … manifest の `screenshots`（414×896）。Chrome のインストール画面に表示される。UIを大きく変えたら撮り直す
 - `.github/workflows/deploy-xserver.yml` … main への push 時、アプリ6ファイルをエックスサーバー（WPサイトの `/app/`）へFTPS自動転送。接続情報は GitHub Secrets（`XSERVER_FTP_HOST` / `XSERVER_FTP_USER` / `XSERVER_FTP_PASSWORD`。転送先パスはワークフロー内に直書き）。未設定時は何もしない
 - `articles/` … SEO記事の原稿（HTML。冒頭に `<!--meta {...} -->` でタイトル・スラッグ・カテゴリ・抜粋）。`post-articles.yml`（手動実行）が WordPress REST API 経由で**下書き**として投稿する。Secrets: `WP_APP_USER` / `WP_APP_PASS`。同スラッグ既存ならスキップ
-- `wp-theme/uchimenu/` … WPサイト（uchimenu.run-digital.com）用テーマ「和モダンポップ」。和紙×朱×山吹、トップにガチャデモ・スマホモック。`deploy-theme.yml` で `wp-content/themes/uchimenu/` へ自動転送。アプリの「必ず守るルール」はこのテーマには適用されない（Google Fonts使用可）が、色・世界観はアプリと揃えること。記事内CTAはショートコード `[gacha_cta kcal="600" dishes="3" label="…"]`
+- `wp-theme/uchimenu/` … WPサイト（uchimenu.run-digital.com）用テーマ「和モダンポップ」。和紙×朱×山吹、トップにガチャデモ・スマホモック。`deploy-theme.yml` で `wp-content/themes/uchimenu/` へ自動転送。アプリの「必ず守るルール」はこのテーマには適用されない（Google Fonts使用可）が、色・世界観はアプリと揃えること。記事内CTAはショートコード `[gacha_cta kcal="600" dishes="3" label="…"]`、アプリ化の手順は `[install_guide]`（トップの「アプリとして使う」`#install` と同じ内容。`/app/?install=1` へ送る）
   - レイアウト注意: `.wrap`（左右 22px）と同じ要素に付けるクラス（`.hero` `.lunch` `.head-in` など）で `padding` のショートハンドを書くと左右余白が消える。必ず `padding:○○ 22px ○○` の形で書く。また装飾の `.blob` など画面外にはみ出す要素は横スクロール（iOSでページ全体が縮小表示される）の原因になるため、`html/body` の `overflow-x:clip` と ≤780px 用の位置調整を維持する
 
 ビルド工程・パッケージマネージャ・テストは存在しない。ブラウザで `index.html` を開けば動く。
@@ -133,7 +134,11 @@ URLパラメータでアプリの初期状態を指定できる（外部通信�
 例: `./?mode=diet&kcal=600&dishes=3` … 記事のCTAから目標セット済みガチャへ直行。
 mode か kcal 付きの訪問では初回オンボーディングを抑制する（完了フラグは立てない）。
 
-### PWA
+### PWA・インストール（ホーム画面に追加）
 
-- `sw.js` を相対パスで登録（`http(s)` プロトコル時のみ）。キャッシュ名 `uchimenu-v1`、ネット優先・失敗時キャッシュ戦略。
+- `sw.js` を相対パスで登録（`http(s)` プロトコル時のみ）。キャッシュ名 `uchimenu-v2`、ネット優先・失敗時キャッシュ戦略。
 - キャッシュ対象を増やす場合は `sw.js` の `ASSETS` に相対パスで追記し、必要ならキャッシュ名のバージョンを上げる。
+- `manifest.webmanifest` には `id` / `screenshots`（3枚・narrow）/ `shortcuts`（ガチャ・ランチ・おしながき）/ `maskable` アイコン / `display_override` を入れてある。screenshots があると Chrome のインストール画面がリッチ表示になるので消さないこと。
+- インストール導線は3か所: ヘッダーの「⤓ アプリにする」（`#headInst`。未インストール時のみ表示）／「これに決めた」の1.8秒後に出るバナー（`#pwaBn`。閉じると `um_pwahide` で二度と出ない）／WPサイトからの `?install=1`。
+- 手順シート `#instSheet` は端末を判定して出し分ける（`openInst()` / `instHTML()`）。iOS Safari＝共有→ホーム画面に追加、iOSのChrome等＝Safariで開き直す案内、Chrome系＝`beforeinstallprompt` を保持してワンタップ、その他＝メニュー操作の案内。iOS には自動プロンプトが存在しないため、この案内を削らないこと。
+- 新しいファイル（アイコン・スクショ等）を追加したら `.github/workflows/deploy-xserver.yml` の `paths` と `cp` の両方に追記する（追記しないと本番の `/app/` に配信されない）。

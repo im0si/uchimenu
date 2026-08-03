@@ -67,6 +67,9 @@ get_header();
 </div>
 
 <div class="wrap">
+	<div class="sec-head rv"><h2>アプリとして使う</h2><span class="en">INSTALL</span></div>
+	<?php echo do_shortcode( '[install_guide]' ); ?>
+
 	<div class="sec-head rv"><h2>新着記事</h2><span class="en">NEW ARTICLES</span></div>
 	<div class="grid">
 		<?php

@@ -9,6 +9,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
+<!-- iOS でホーム画面から開いたときにアプリらしく（アドレスバーなし）表示するための指定 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="うちめにゅー">
 <style>
   :root{
     --bg:#f6f1e6; --card:#fffdf9; --ink:#2b2620; --sub:#8a7a5c; --line:#ddd1b6;
@@ -159,6 +163,22 @@
     padding:18px 18px calc(20px + env(safe-area-inset-bottom))}
   .sheet-head{display:flex;align-items:center;justify-content:space-between;font-size:16px;font-weight:800}
   .profout{margin-top:16px;background:#efe8d6;border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.8}
+  /* ---------- インストール手順 ---------- */
+  .instlead{display:flex;gap:12px;align-items:center;background:#efe8d6;border-radius:14px;padding:13px;margin:14px 0 4px}
+  .instlead .insticon{width:52px;height:52px;border-radius:14px;flex-shrink:0}
+  .instlead b{font-size:14px;display:block}
+  .instlead span{font-size:12px;color:var(--sub);line-height:1.7}
+  .inststep{display:flex;gap:12px;align-items:flex-start;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .inststep:last-child{border-bottom:none}
+  .inststep .no{width:24px;height:24px;border-radius:50%;background:var(--shu);color:#fffdf9;font-size:12px;
+    font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .inststep b{font-size:14px;display:block;font-weight:700}
+  .inststep span{font-size:12.5px;color:var(--sub);line-height:1.7}
+  .inststep .ic{font-size:17px;vertical-align:-2px}
+  .instnote{background:#faf3f4;border:1px dashed #e0b9c0;border-radius:12px;padding:11px 13px;
+    font-size:12px;color:var(--sakura);line-height:1.7;margin-top:12px}
+  .headinst{margin-left:auto;border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:999px;padding:6px 12px;font-size:11.5px;font-weight:700;white-space:nowrap}
   .profout b{font-size:17px}
   /* ---------- 週間ガチャ・買い物リスト・体重 ---------- */
   .wk{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
@@ -203,7 +223,8 @@
 <body>
 <header>
   <span class="logo-dot"></span><h1>うちめにゅー</h1>
-  <button class="helpbtn" id="helpBtn" aria-label="使い方">?</button>
+  <button class="headinst hidden" id="headInst">⤓ アプリにする</button>
+  <button class="helpbtn" id="helpBtn" aria-label="使い方" style="margin-left:8px">?</button>
 </header>
 
 <main id="main">
@@ -404,6 +425,21 @@
   <button data-page="log"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>きろく</button>
 </nav>
 <div class="toast" id="toast"></div>
+
+<!-- インストール手順（端末ごとに出し分ける。iOSは自動プロンプトが無いため手順を図で案内） -->
+<div id="instSheet" class="sheetwrap hidden">
+  <div class="sheet">
+    <div class="sheet-head"><span>アプリとして使う</span><button class="icbtn" id="instClose" aria-label="閉じる">✕</button></div>
+    <div class="instlead">
+      <img src="icon-192.png" alt="" class="insticon">
+      <div><b>ホーム画面に置くと、こう変わります</b>
+        <span>アイコンを1タップで起動／アドレスバーが消えて全画面／圏外でも開ける／記録はこの端末に残ります</span></div>
+    </div>
+    <div id="instSteps"></div>
+    <button class="btn2 fill" id="instGo" style="width:100%;margin-top:14px">この端末に追加する</button>
+    <div class="note" style="text-align:center">ダウンロード不要・容量はほぼゼロ・いつでも削除できます</div>
+  </div>
+</div>
 
 <!-- ホーム画面追加の促し（2回目以降の訪問で表示・閉じたら二度と出ない） -->
 <div id="pwaBn" class="hidden" style="position:fixed;left:12px;right:12px;bottom:78px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 28px rgba(43,38,32,.22);padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:12.5px;max-width:496px;margin:0 auto">
@@ -748,6 +784,8 @@ $("decideBtn").onclick=()=>{
   renderHist();
   $("decideBtn").textContent="✓ きろくしました";
   toast("今夜の献立を「きろく」に残しました");
+  /* 便利さが伝わったこのタイミングでだけ、ホーム画面追加をすすめる */
+  setTimeout(()=>{if(typeof showPwaBn==="function")showPwaBn()},1800);
 };
 /* ガチャ結果をお品書き風の画像カードにする（SNS共有用） */
 function resultCard(menu){
@@ -1519,27 +1557,69 @@ if(!store.get("onboarded",0)){obStep=0;obRender();$("onboard").classList.remove(
 if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
   navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
-/* ホーム画面追加の促し: 2回目以降の訪問・未インストール時のみ。閉じたら出さない */
+/* ---- インストール（ホーム画面に追加）導線 ----
+   Android/PC の Chrome 系は beforeinstallprompt でワンタップ。
+   iOS は自動プロンプトが無いため手順を案内する（Safari以外では Safari で開く案内）。 */
 const visits=(store.get("visits",0)||0)+1;store.set("visits",visits);
 const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const UA=navigator.userAgent;
+const isIOS=/iphone|ipad|ipod/i.test(UA)||(/Macintosh/.test(UA)&&navigator.maxTouchPoints>1);
+const iosSafari=isIOS&&!/CriOS|FxiOS|EdgiOS|OPiOS/i.test(UA);
 let bipEvent=null;
+
+function step(n,title,desc){
+  return '<div class="inststep"><span class="no">'+n+'</span><div><b>'+title+'</b><span>'+desc+'</span></div></div>';
+}
+function instHTML(){
+  if(isIOS&&!iosSafari)
+    return step(1,"Safari で開き直す",'このページのURLをコピーして、iPhone標準の「Safari」で開いてください。ホーム画面への追加は Safari からのみできます')
+      +step(2,"共有ボタンを押す",'画面下（または上）の <span class="ic">⬆️</span> を押します')
+      +step(3,"「ホーム画面に追加」",'メニューを下にスクロールして選び、右上の「追加」を押して完了です');
+  if(isIOS)
+    return step(1,"共有ボタンを押す",'画面下の <span class="ic">⬆️</span>（四角から矢印が出たマーク）を押します')
+      +step(2,"「ホーム画面に追加」を選ぶ",'メニューを下にスクロールすると出てきます')
+      +step(3,"右上の「追加」を押す",'ホーム画面にアイコンができて完了です');
+  if(bipEvent)
+    return step(1,"下のボタンを押す",'「この端末に追加する」を押すと確認が出ます')
+      +step(2,"「インストール」を選ぶ",'ホーム画面（PCはデスクトップ）にアイコンができます');
+  return step(1,"ブラウザのメニューを開く",'Android Chrome は右上の <span class="ic">⋮</span>、PCはアドレスバー右の <span class="ic">⤓</span> を押します')
+    +step(2,"「アプリをインストール」を選ぶ",'「ホーム画面に追加」と表示される場合もあります')
+    +'<div class="instnote">この画面が出ないブラウザ（iPhoneのChrome・一部のアプリ内ブラウザ）では追加できません。Safari や Chrome で開き直してください。</div>';
+}
+function openInst(){
+  $("instSteps").innerHTML=instHTML();
+  const go=$("instGo");
+  if(bipEvent){go.classList.remove("hidden");go.textContent="この端末に追加する"}
+  else go.classList.add("hidden");
+  $("instSheet").classList.remove("hidden");
+}
+$("instClose").onclick=()=>$("instSheet").classList.add("hidden");
+$("instSheet").onclick=e=>{if(e.target===$("instSheet"))$("instSheet").classList.add("hidden")};
+$("instGo").onclick=async()=>{
+  if(!bipEvent)return;
+  bipEvent.prompt();const r=await bipEvent.userChoice;bipEvent=null;
+  $("instSheet").classList.add("hidden");store.set("pwahide",1);$("pwaBn").classList.add("hidden");
+  if(r&&r.outcome==="accepted")toast("ホーム画面に追加しました");
+};
+$("headInst").onclick=openInst;
+if(!standalone)$("headInst").classList.remove("hidden");
+
+/* バナー: 押しつけない。ガチャで結果を1回見たあと、または2回目以降の訪問で1度だけ */
 function showPwaBn(msg){
-  if(store.get("pwahide",0)||standalone||visits<2||!store.get("onboarded",0))return;
+  if(store.get("pwahide",0)||standalone)return;
+  if($("onboard")&&!$("onboard").classList.contains("hidden"))return;
   if(msg)$("pwaMsg").textContent=msg;
   $("pwaBn").classList.remove("hidden");
 }
-window.addEventListener("beforeinstallprompt",e=>{
-  e.preventDefault();bipEvent=e;showPwaBn();
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();bipEvent=e;if(visits>=2)showPwaBn()});
+window.addEventListener("appinstalled",()=>{
+  store.set("pwahide",1);$("pwaBn").classList.add("hidden");$("headInst").classList.add("hidden");
 });
-if(/iphone|ipad/i.test(navigator.userAgent)&&!standalone){
-  $("pwaGo").classList.add("hidden");
-  showPwaBn("共有ボタン→「ホーム画面に追加」で、毎日ワンタップで開けます");
-}
-$("pwaGo").onclick=async()=>{
-  if(bipEvent){bipEvent.prompt();await bipEvent.userChoice;bipEvent=null}
-  $("pwaBn").classList.add("hidden");store.set("pwahide",1);
-};
+if(isIOS&&visits>=2)showPwaBn("ホーム画面に追加すると、毎日ワンタップで開けます");
+$("pwaGo").onclick=openInst;
 $("pwaNo").onclick=()=>{$("pwaBn").classList.add("hidden");store.set("pwahide",1)};
+/* 記事などから ?install=1 で来た人にはすぐ手順を出す */
+if(new URLSearchParams(location.search).get("install")==="1"&&!standalone)openInst();
 
 refreshAll();renderHist();renderWeek();renderWeight();renderNg();
 </script>

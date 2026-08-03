@@ -109,6 +109,50 @@ function uchimenu_gacha_cta_sc( $atts ) {
 }
 add_shortcode( 'gacha_cta', 'uchimenu_gacha_cta_sc' );
 
+/**
+ * ショートコード [install_guide]
+ * ホーム画面への追加（アプリ化）手順。iPhone / Android の両方を並べる。
+ */
+function uchimenu_install_guide_sc( $atts ) {
+	$a = shortcode_atts( array(
+		'title' => 'スマホのアプリとして使う（無料・ダウンロード不要）',
+	), $atts );
+	$url = uchimenu_app_url( array( 'install' => '1' ) );
+	ob_start(); ?>
+	<div class="um-install" id="install">
+		<div class="um-install-h">
+			<img src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png' ); ?>" alt="" width="64" height="64">
+			<div><b><?php echo esc_html( $a['title'] ); ?></b>
+				<span>ホーム画面に置くと、アイコンから1タップで起動。アドレスバーが消えて全画面になり、電波がなくても開けます。</span></div>
+		</div>
+		<div class="um-install-cols">
+			<div class="um-install-col">
+				<div class="h"><span class="ic"></span>iPhone・iPad（Safari）</div>
+				<ol>
+					<li>下のボタンでアプリを開く</li>
+					<li>画面下の共有ボタン <b>⬆︎</b> を押す</li>
+					<li>「ホーム画面に追加」を選ぶ</li>
+					<li>右上の「追加」で完了</li>
+				</ol>
+			</div>
+			<div class="um-install-col">
+				<div class="h"><span class="ic"></span>Android・パソコン（Chrome）</div>
+				<ol>
+					<li>下のボタンでアプリを開く</li>
+					<li>「この端末に追加する」を押す</li>
+					<li>確認画面で「インストール」を選ぶ</li>
+					<li>ホーム画面にアイコンができます</li>
+				</ol>
+			</div>
+		</div>
+		<a class="um-cta-btn" href="<?php echo $url; ?>">アプリを開いて追加する</a>
+		<div class="um-cta-note">登録不要・無料。記録はお使いの端末に保存されます</div>
+	</div>
+	<?php
+	return ob_get_clean();
+}
+add_shortcode( 'install_guide', 'uchimenu_install_guide_sc' );
+
 /** 記事本文の末尾にアプリ誘導を自動挿入 */
 function uchimenu_after_content( $content ) {
 	if ( is_singular( 'post' ) && in_the_loop() && is_main_query() ) {

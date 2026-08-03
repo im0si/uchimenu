@@ -14,4 +14,6 @@
 		<span class="site-tagline"><?php bloginfo( 'description' ); ?></span>
 		<a class="head-cta" href="<?php echo uchimenu_app_url(); ?>">🎲 アプリを開く</a>
 	</div>
+	<?php uchimenu_nav(); ?>
 </header>
+<?php uchimenu_breadcrumb(); ?>

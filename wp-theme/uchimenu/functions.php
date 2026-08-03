@@ -59,6 +59,72 @@ function uchimenu_app_url( $args = array() ) {
 	return esc_url( $url );
 }
 
+/**
+ * サイト共通ナビ（カテゴリ）
+ * このサイト（記事・カテゴリ・固定ページ）はすべて「うちめにゅー Magazine」の中。
+ * どのページからでも同じ入口が並ぶようヘッダー直下に置く。
+ */
+function uchimenu_nav() {
+	$cats = get_categories( array( 'hide_empty' => false, 'number' => 8, 'orderby' => 'count', 'order' => 'DESC' ) );
+	if ( ! $cats ) return;
+	$here = is_home() || is_front_page();
+	echo '<nav class="site-nav" aria-label="カテゴリ"><div class="wrap nav-in">';
+	echo '<a class="nav-i' . ( $here ? ' on' : '' ) . '" href="' . esc_url( home_url( '/' ) ) . '">ホーム</a>';
+	foreach ( $cats as $c ) {
+		$on = is_category( $c->term_id ) ? ' on' : '';
+		echo '<a class="nav-i' . $on . '" href="' . esc_url( get_category_link( $c ) ) . '">'
+			. '<i class="' . esc_attr( uchimenu_cat_class( $c->name ) ) . '"></i>' . esc_html( $c->name ) . '</a>';
+	}
+	echo '</div></nav>';
+}
+
+/**
+ * パンくず（うちめにゅー Magazine › カテゴリ › 記事）
+ * トップでは出さない。アプリ（/app/）はこのサイトの外なので対象外。
+ */
+function uchimenu_breadcrumb() {
+	if ( is_front_page() ) return;
+	$items = array( array( 'name' => UCHIMENU_SITE_NAME, 'url' => home_url( '/' ) ) );
+	if ( is_singular( 'post' ) ) {
+		$cats = get_the_category();
+		if ( $cats ) $items[] = array( 'name' => $cats[0]->name, 'url' => get_category_link( $cats[0] ) );
+		$items[] = array( 'name' => get_the_title(), 'url' => '' );
+	} elseif ( is_category() ) {
+		$items[] = array( 'name' => single_term_title( '', false ), 'url' => '' );
+	} elseif ( is_page() ) {
+		$items[] = array( 'name' => get_the_title(), 'url' => '' );
+	} elseif ( is_home() ) {
+		$items[] = array( 'name' => '記事一覧', 'url' => '' );
+	} else {
+		$items[] = array( 'name' => '検索・アーカイブ', 'url' => '' );
+	}
+	echo '<div class="crumb"><div class="wrap crumb-in">';
+	$last = count( $items ) - 1;
+	foreach ( $items as $i => $it ) {
+		if ( $i ) echo '<span class="sep">›</span>';
+		if ( $it['url'] && $i !== $last ) {
+			echo '<a href="' . esc_url( $it['url'] ) . '">' . esc_html( $it['name'] ) . '</a>';
+		} else {
+			echo '<span class="cur">' . esc_html( $it['name'] ) . '</span>';
+		}
+	}
+	echo '</div></div>';
+}
+
+/** OGP（共有時の表示名も「うちめにゅー Magazine」に揃える） */
+function uchimenu_ogp() {
+	$title = is_front_page() ? UCHIMENU_SITE_NAME : wp_get_document_title();
+	$desc  = is_singular() && has_excerpt() ? get_the_excerpt() : get_bloginfo( 'description' );
+	$url   = is_singular() ? get_permalink() : home_url( add_query_arg( array() ) );
+	echo '<meta property="og:site_name" content="' . esc_attr( UCHIMENU_SITE_NAME ) . '">' . "\n";
+	echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
+	echo '<meta property="og:description" content="' . esc_attr( wp_strip_all_tags( $desc ) ) . '">' . "\n";
+	echo '<meta property="og:type" content="' . ( is_singular( 'post' ) ? 'article' : 'website' ) . '">' . "\n";
+	echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
+	echo '<meta name="twitter:card" content="summary_large_image">' . "\n";
+}
+add_action( 'wp_head', 'uchimenu_ogp', 5 );
+
 /** カテゴリ名 → 色クラス */
 function uchimenu_cat_class( $name ) {
 	$map = array(

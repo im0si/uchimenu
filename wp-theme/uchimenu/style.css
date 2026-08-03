@@ -237,6 +237,21 @@ a.tag{text-decoration:none}
 @media(max-width:780px){.um-install{padding:24px 18px}.um-install-cols{grid-template-columns:1fr}
   .um-install-h{flex-direction:column;text-align:center;gap:12px}.um-install-h b{font-size:17px}}
 
+/* 画面下のアプリ設置バー（小さく・閉じられる＝Googleの推奨に沿う） */
+.um-appbar{position:fixed;left:8px;right:8px;bottom:8px;z-index:40;display:none;align-items:center;gap:11px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 12px;
+  box-shadow:0 10px 30px rgba(43,38,32,.22);max-width:560px;margin:0 auto;
+  transform:translateY(130%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.um-appbar.on{display:flex;transform:translateY(0)}
+.um-appbar img{border-radius:9px;flex-shrink:0}
+.um-appbar .tx{flex:1;min-width:0;line-height:1.4}
+.um-appbar .tx b{font-size:13px;display:block}
+.um-appbar .tx span{font-size:11px;color:var(--sub)}
+.um-appbar .go{background:var(--grad);color:#fffdf9;text-decoration:none;border-radius:999px;
+  padding:8px 16px;font-size:13px;font-weight:800;flex-shrink:0}
+.um-appbar .close{border:none;background:none;color:var(--sub);font-size:15px;padding:4px 2px;cursor:pointer}
+@media(min-width:821px){.um-appbar{display:none!important}}
+
 /* ---------- archive ---------- */
 .archive-head{padding:48px 0 6px}
 .archive-head .kick{color:var(--shu)}

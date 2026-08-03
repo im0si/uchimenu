@@ -79,6 +79,38 @@
 		}, 5200);
 	}
 
+	/* アプリ設置バー（画面下・小さめ）
+	   Googleは「画面を覆う大きなポップアップ」を検索順位で不利に扱うため、
+	   ブラウザ標準のアプリバナー相当の小さい帯にとどめ、閉じたら30日出さない。 */
+	var bar = document.getElementById('umAppBar');
+	if (bar) {
+		var KEY = 'um_wpbar_until';
+		var standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+		var snoozed = false;
+		try { snoozed = parseInt(localStorage.getItem(KEY) || '0', 10) > Date.now(); } catch (e) {}
+		if (!standalone && !snoozed && innerWidth <= 820) {
+			var shown = false;
+			var maybeShow = function () {
+				if (shown) return;
+				var h = document.documentElement;
+				var p = h.scrollTop / Math.max(1, h.scrollHeight - h.clientHeight);
+				if (p < 0.35) return;          /* 読み始めを邪魔しない */
+				shown = true;
+				bar.classList.add('on');
+				removeEventListener('scroll', maybeShow);
+			};
+			addEventListener('scroll', maybeShow, { passive: true });
+			setTimeout(maybeShow, 25000);      /* 長く読んでいる人にも出す */
+			bar.querySelector('.close').addEventListener('click', function () {
+				bar.classList.remove('on');
+				try { localStorage.setItem(KEY, Date.now() + 30 * 86400000); } catch (e) {}
+			});
+			bar.querySelector('.go').addEventListener('click', function () {
+				if (typeof gtag === 'function') gtag('event', 'pwa_bar_click');
+			});
+		}
+	}
+
 	/* 料理名ティッカー */
 	var marq = document.getElementById('marq');
 	if (marq) {

@@ -7,7 +7,7 @@
 </footer>
 <!-- 画面下の小さなアプリ設置バー（スマホのみ・スクロール35%以降・閉じたら30日出さない） -->
 <div id="umAppBar" class="um-appbar">
-	<img src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png' ); ?>" alt="" width="34" height="34">
+	<img src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png?v=' . uchimenu_asset_ver( 'app-icon.png' ) ); ?>" alt="" width="34" height="34">
 	<div class="tx"><b>ホーム画面に追加できます</b><span>1タップで献立ガチャ・無料</span></div>
 	<a class="go" href="<?php echo uchimenu_app_url( array( 'install' => '1' ) ); ?>">追加</a>
 	<button class="close" aria-label="閉じる">✕</button>

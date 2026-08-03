@@ -17,14 +17,25 @@ function uchimenu_setup() {
 }
 add_action( 'after_setup_theme', 'uchimenu_setup' );
 
+/**
+ * CSS / JS のバージョン文字列（キャッシュ対策）
+ * ファイルの更新時刻を使うので、デプロイするたびに ?ver= が変わり、
+ * 閲覧者のブラウザが自動で最新を取り直す。手動でのキャッシュ削除は不要。
+ */
+function uchimenu_asset_ver( $file ) {
+	$path = get_template_directory() . '/' . ltrim( $file, '/' );
+	$mt   = file_exists( $path ) ? filemtime( $path ) : 0;
+	return $mt ? (string) $mt : wp_get_theme()->get( 'Version' );
+}
+
 function uchimenu_scripts() {
 	wp_enqueue_style( 'uchimenu-fonts',
 		'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Archivo+Black&display=swap',
 		array(), null );
 	wp_enqueue_style( 'uchimenu-style', get_stylesheet_uri(), array( 'uchimenu-fonts' ),
-		wp_get_theme()->get( 'Version' ) );
+		uchimenu_asset_ver( 'style.css' ) );
 	wp_enqueue_script( 'uchimenu-front', get_template_directory_uri() . '/front.js', array(),
-		wp_get_theme()->get( 'Version' ), true );
+		uchimenu_asset_ver( 'front.js' ), true );
 }
 add_action( 'wp_enqueue_scripts', 'uchimenu_scripts' );
 
@@ -121,7 +132,7 @@ function uchimenu_install_guide_sc( $atts ) {
 	ob_start(); ?>
 	<div class="um-install" id="install">
 		<div class="um-install-h">
-			<img src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png' ); ?>" alt="" width="64" height="64">
+			<img src="<?php echo esc_url( get_template_directory_uri() . '/app-icon.png?v=' . uchimenu_asset_ver( 'app-icon.png' ) ); ?>" alt="" width="64" height="64">
 			<div><b><?php echo esc_html( $a['title'] ); ?></b>
 				<span>ホーム画面に置くと、アイコンから1タップで起動。アドレスバーが消えて全画面になり、電波がなくても開けます。</span></div>
 		</div>

@@ -1,0 +1,17 @@
+# うちめにゅー アプリ（/app/）のキャッシュ設定
+# 目的: 更新したのに古い画面が出る、を防ぐ。
+#  - index.html / manifest / sw.js … 毎回サーバーに確認させる（更新が即反映される）
+#  - アイコン・スクショ … 1時間だけキャッシュ（表示は速いまま、差し替えも当日中に届く）
+# mod_headers が無い環境でもエラーにならないよう IfModule で囲っている。
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "^sw\.js$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(png|jpg|jpeg|svg|webp)$">
+    Header set Cache-Control "public, max-age=3600"
+  </FilesMatch>
+</IfModule>

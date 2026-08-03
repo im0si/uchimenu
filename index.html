@@ -177,6 +177,10 @@
   .instlead .insticon{width:52px;height:52px;border-radius:14px;flex-shrink:0}
   .instlead b{font-size:14px;display:block}
   .instlead span{font-size:12px;color:var(--sub);line-height:1.7}
+  .instmerit{list-style:none;margin:7px 0 0;padding:0}
+  .instmerit li{font-size:12.5px;color:var(--sub);line-height:1.85;padding-left:15px;position:relative}
+  .instmerit li::before{content:"";position:absolute;left:0;top:.72em;width:6px;height:6px;
+    border-radius:50%;background:var(--grad)}
   .inststep{display:flex;gap:12px;align-items:flex-start;padding:12px 2px;border-bottom:1px solid var(--line)}
   .inststep:last-child{border-bottom:none}
   .inststep .no{width:24px;height:24px;border-radius:50%;background:var(--shu);color:#fffdf9;font-size:12px;
@@ -417,8 +421,12 @@
     <h2>アプリとして使う</h2>
     <div class="instlead" style="margin-top:0">
       <img src="icon-192.png?v=2" alt="" class="insticon">
-      <div><b>ホーム画面に置くと、ワンタップ</b>
-        <span>アドレスバーが消えて全画面に。圏外でも開けます。ダウンロード不要・無料です</span></div>
+      <div><b>ホーム画面に置くと、こう変わります</b>
+        <ul class="instmerit">
+          <li>1タップで起動</li>
+          <li>記録が端末に残る</li>
+          <li>全画面表示でとても見やすい！</li>
+        </ul></div>
     </div>
     <button class="btn2 fill" id="instCardBtn" style="width:100%;margin-top:12px">追加のしかたを見る</button>
   </div>
@@ -441,7 +449,11 @@
     <div class="instlead">
       <img src="icon-192.png?v=2" alt="" class="insticon">
       <div><b>ホーム画面に置くと、こう変わります</b>
-        <span>アイコンを1タップで起動／アドレスバーが消えて全画面／圏外でも開ける／記録はこの端末に残ります</span></div>
+        <ul class="instmerit">
+          <li>1タップで起動</li>
+          <li>記録が端末に残る</li>
+          <li>全画面表示でとても見やすい！</li>
+        </ul></div>
     </div>
     <div id="instSteps"></div>
     <button class="btn2 fill" id="instGo" style="width:100%;margin-top:14px">この端末に追加する</button>

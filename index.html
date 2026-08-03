@@ -7,8 +7,8 @@
 <meta name="description" content="自分の手料理でつくる、自分だけのメニュー表。今夜の献立はガチャで決めよう。">
 <meta name="theme-color" content="#f6f1e6">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" href="icon-192.png?v=2">
 <!-- iOS でホーム画面から開いたときにアプリらしく（アドレスバーなし）表示するための指定 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -407,19 +407,11 @@
   <div class="card hidden" id="instCard">
     <h2>アプリとして使う</h2>
     <div class="instlead" style="margin-top:0">
-      <img src="icon-192.png" alt="" class="insticon">
+      <img src="icon-192.png?v=2" alt="" class="insticon">
       <div><b>ホーム画面に置くと、ワンタップ</b>
         <span>アドレスバーが消えて全画面に。圏外でも開けます。ダウンロード不要・無料です</span></div>
     </div>
     <button class="btn2 fill" id="instCardBtn" style="width:100%;margin-top:12px">追加のしかたを見る</button>
-  </div>
-  <div class="card">
-    <h2>データのバックアップ</h2>
-    <div class="note" style="margin-top:0">記録はこの端末の中だけに保存されています。機種変更やブラウザのデータ削除にそなえて、ときどきファイルに保存しておくと安心です。</div>
-    <div class="actions" style="margin-top:12px">
-      <button class="btn2" id="expBtn">📤 ファイルに保存</button>
-      <label class="btn2" style="text-align:center;cursor:pointer">📥 ファイルから復元<input type="file" id="impIn" accept=".json,application/json" class="hidden"></label>
-    </div>
   </div>
 </div>
 </main>
@@ -438,7 +430,7 @@
   <div class="sheet">
     <div class="sheet-head"><span>アプリとして使う</span><button class="icbtn" id="instClose" aria-label="閉じる">✕</button></div>
     <div class="instlead">
-      <img src="icon-192.png" alt="" class="insticon">
+      <img src="icon-192.png?v=2" alt="" class="insticon">
       <div><b>ホーム画面に置くと、こう変わります</b>
         <span>アイコンを1タップで起動／アドレスバーが消えて全画面／圏外でも開ける／記録はこの端末に残ります</span></div>
     </div>
@@ -1425,40 +1417,12 @@ function renderWeight(){
   box.innerHTML=svg+diff;
 }
 
-/* ============ バックアップ・復元 ============ */
-const BK_KEYS=["menu","hist","recent","family","onboarded","profile","lunchlog","week","shop","weight"];
-$("expBtn").onclick=()=>{
-  const data={app:"uchimenu",ver:1,ts:Date.now()};
-  BK_KEYS.forEach(k=>{const v=store.get(k,null);if(v!==null)data[k]=v});
-  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
-  const a=document.createElement("a");
-  const d=new Date();
-  a.href=URL.createObjectURL(blob);
-  a.download="uchimenu-backup-"+d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2)+".json";
-  a.click();
-  toast("バックアップを保存しました");
-};
-$("impIn").onchange=e=>{
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{
-    try{
-      const data=JSON.parse(r.result);
-      if(data.app!=="uchimenu")throw 0;
-      if(!confirm("この端末の記録を、ファイルの内容で置き換えます。よろしいですか？"))return;
-      BK_KEYS.forEach(k=>{if(k in data)store.set(k,data[k])});
-      location.reload();
-    }catch(err){toast("バックアップファイルを読み込めませんでした")}
-  };
-  r.readAsText(f);
-};
-
 /* ============ 初回ガイド（オンボーディング） ============ */
 let obStep=0;
 const obPicked=new Set();
 function obSlide1(){
   return '<div class="ob-hero">'
-    +'<img class="icon" src="icon-192.png" alt="">'
+    +'<img class="icon" src="icon-192.png?v=2" alt="">'
     +'<h3>うちめにゅーへようこそ</h3><p>毎日の「今夜なに作ろう…」を、10秒で終わらせるアプリです</p></div>'
     +'<div style="margin-top:10px">'
     +'<div class="ob-feat"><div class="fi">🎲</div><div><b>献立はガチャで決める</b><span>定食・一皿・カスタマイズの3スタイル。ボタンを押すだけで今夜の献立が決まります。</span></div></div>'

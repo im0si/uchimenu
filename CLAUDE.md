@@ -12,7 +12,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `sw.js` … Service Worker（オフラインキャッシュ、ネット優先・失敗時キャッシュ）
 - `.htaccess` … 本番 `/app/` 用のキャッシュ設定。HTML/manifest/sw.js は毎回サーバーに確認（更新が即反映）、画像は1時間。`mod_headers` が無くても落ちないよう `IfModule` で囲ってある
 - `manifest.webmanifest` … PWA マニフェスト（`start_url` / `scope` は `./`）
-- `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類（珊瑚 `#ff6f5e`→山吹 `#ffc247` の明るいグラデに、白い茶碗＋湯気＋ほお紅。UIの `--grad`（朱→山吹）より明るめにして小さい表示でも沈まないようにしている。`scratchpad` の SVG から生成。デザイン変更時は3サイズと `wp-theme/uchimenu/app-icon.png` を必ず揃える）
+- `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類（`?v=N` 付きで参照している。**アイコンを差し替えたら index.html・manifest・sw.js の `?v=` をまとめて上げ、`sw.js` のキャッシュ名も上げること**。ファイル名が同じだと端末に古い画像が residual で残る）（珊瑚 `#ff6f5e`→山吹 `#ffc247` の明るいグラデに、白い茶碗＋湯気＋ほお紅。UIの `--grad`（朱→山吹）より明るめにして小さい表示でも沈まないようにしている。`scratchpad` の SVG から生成。デザイン変更時は3サイズと `wp-theme/uchimenu/app-icon.png` を必ず揃える）
 - `shot-gacha.png` / `shot-lunch.png` / `shot-week.png` … manifest の `screenshots`（414×896）。Chrome のインストール画面に表示される。UIを大きく変えたら撮り直す
 - `.github/workflows/deploy-xserver.yml` … main への push 時、アプリ6ファイルをエックスサーバー（WPサイトの `/app/`）へFTPS自動転送。接続情報は GitHub Secrets（`XSERVER_FTP_HOST` / `XSERVER_FTP_USER` / `XSERVER_FTP_PASSWORD`。転送先パスはワークフロー内に直書き）。未設定時は何もしない
 - `articles/` … SEO記事の原稿（HTML。冒頭に `<!--meta {...} -->` でタイトル・スラッグ・カテゴリ・抜粋）。`post-articles.yml`（手動実行）が WordPress REST API 経由で**下書き**として投稿する。Secrets: `WP_APP_USER` / `WP_APP_PASS`。同スラッグ既存ならスキップ
@@ -76,7 +76,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 | ランチ | `#page-lunch` | 外食・コンビニ飯の記録（定番タップ追加 `LUNCH_GROUPS`・写真つき手入力）、今日の合計と連続記録日数、夕食予算カード、たいじゅうメモ（1日1回・同日上書き・SVGグラフ・減量目標ライン） |
 | めにゅー | `#page-menu` | レパートリー統計、定番からのタップ追加（`#quickList`）、自作料理の登録フォーム（写真・カテゴリ・kcal）、登録済み一覧（お気に入り⭐・削除）。登録フォーム `#formBox` は `open` 属性で最初から開いた状態にする |
 | おしながき | `#page-oshi` | 「◯◯家のお品書き」和紙風表示（`.paper`）、Canvas での画像保存、印刷/PDF、実物お届けサービスの案内 |
-| きろく | `#page-log` | 「これに決めた」で保存された献立履歴（直近30件、✕ボタンで1件削除・confirm付き）、データのバックアップ（JSONエクスポート／インポート、対象キーは `BK_KEYS`） |
+| きろく | `#page-log` | 「これに決めた」で保存された献立履歴（直近30件、✕ボタンで1件削除・confirm付き）、常設のインストール導線カード（`#instCard`） |
 
 このほか、初回起動時のみ表示されるオンボーディング全画面（`#onboard`、3スライド）、トースト通知（`#toast`）、ボトムシート2種（`#profile` 目標カロリー計算、`#shop` 買い物リスト。共通クラス `.sheetwrap`）、PWAインストール促進バナー（`#pwaBn`。下部ナビの上に固定表示）がある。
 ランチの連続記録日数にはバッジを併記する（3日🌱／7日🔥／14日⭐／30日🏆／100日👑）。

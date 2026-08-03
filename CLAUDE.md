@@ -12,7 +12,7 @@ GitHub Pages（https://im0si.github.io/uchimenu/）で公開している。
 - `sw.js` … Service Worker（オフラインキャッシュ、ネット優先・失敗時キャッシュ）
 - `.htaccess` … 本番 `/app/` 用のキャッシュ設定。HTML/manifest/sw.js は毎回サーバーに確認（更新が即反映）、画像は1時間。`mod_headers` が無くても落ちないよう `IfModule` で囲ってある
 - `manifest.webmanifest` … PWA マニフェスト（`start_url` / `scope` は `./`）
-- `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類（朱→山吹グラデに白い茶碗＋湯気。`scratchpad` の SVG から生成。デザイン変更時は3サイズと `wp-theme/uchimenu/app-icon.png` を必ず揃える）
+- `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` … アイコン類（珊瑚 `#ff6f5e`→山吹 `#ffc247` の明るいグラデに、白い茶碗＋湯気＋ほお紅。UIの `--grad`（朱→山吹）より明るめにして小さい表示でも沈まないようにしている。`scratchpad` の SVG から生成。デザイン変更時は3サイズと `wp-theme/uchimenu/app-icon.png` を必ず揃える）
 - `shot-gacha.png` / `shot-lunch.png` / `shot-week.png` … manifest の `screenshots`（414×896）。Chrome のインストール画面に表示される。UIを大きく変えたら撮り直す
 - `.github/workflows/deploy-xserver.yml` … main への push 時、アプリ6ファイルをエックスサーバー（WPサイトの `/app/`）へFTPS自動転送。接続情報は GitHub Secrets（`XSERVER_FTP_HOST` / `XSERVER_FTP_USER` / `XSERVER_FTP_PASSWORD`。転送先パスはワークフロー内に直書き）。未設定時は何もしない
 - `articles/` … SEO記事の原稿（HTML。冒頭に `<!--meta {...} -->` でタイトル・スラッグ・カテゴリ・抜粋）。`post-articles.yml`（手動実行）が WordPress REST API 経由で**下書き**として投稿する。Secrets: `WP_APP_USER` / `WP_APP_PASS`。同スラッグ既存ならスキップ

@@ -21,6 +21,11 @@ on:
       - .htaccess
   workflow_dispatch:
 
+# アプリ転送と同時に走ると、サーバー側のFTP同時接続制限に当たって失敗するため直列化する
+concurrency:
+  group: xserver-ftp
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -40,7 +45,7 @@ jobs:
           cp index.html sw.js manifest.webmanifest icon-192.png icon-512.png apple-touch-icon.png \
              shot-gacha.png shot-lunch.png shot-week.png .htaccess out/
 
-      - name: Upload via FTPS (lftp, 3 retries)
+      - name: Upload via FTPS (lftp, 5 retries)
         if: steps.check.outputs.configured == 'true'
         env:
           H: ${{ secrets.XSERVER_FTP_HOST }}
@@ -48,13 +53,13 @@ jobs:
           P: ${{ secrets.XSERVER_FTP_PASSWORD }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-          for i in 1 2 3; do
-            if lftp -u "$U","$P" -e "set ftp:ssl-force true; set net:timeout 20; set net:max-retries 2;               mirror -R --verbose out/ /run-digital.com/public_html/uchimenu.run-digital.com/app/;               put -O /run-digital.com/public_html/uchimenu.run-digital.com/app/ out/.htaccess;               bye" "$H"; then
+          for i in 1 2 3 4 5; do
+            if lftp -u "$U","$P" -e "set ftp:ssl-force true; set ftp:passive-mode true; set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 8; set net:connection-limit 1; set mirror:parallel-transfer-count 1;               mirror -R --verbose out/ /run-digital.com/public_html/uchimenu.run-digital.com/app/;               put -O /run-digital.com/public_html/uchimenu.run-digital.com/app/ out/.htaccess;               bye" "$H"; then
               echo "upload ok"; exit 0
             fi
-            echo "attempt $i failed, waiting..."; sleep 20
+            echo "attempt $i failed, waiting..."; sleep $((i*20))
           done
-          echo "upload failed after 3 attempts"; exit 1
+          echo "upload failed after 5 attempts"; exit 1
 
       - name: Skip note
         if: steps.check.outputs.configured != 'true'
